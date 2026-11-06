@@ -10,6 +10,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Fretwork">
 <title>Fretwork — tuner, smart chords, looper, notation</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
 <style>
 :root{
   --bg:#13151E;--s1:#1B1F2E;--s2:#242A3F;--s3:#2E3550;--line:#323959;--tx:#EDE8DC;--mu:#98A0BB;
@@ -397,6 +400,101 @@ button.status{cursor:pointer;color:var(--tx)}
 .vidrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:8px}
 .vidkey{display:inline-flex;align-items:center;gap:5px;background:var(--s2);border-radius:999px;padding:4px 10px;font-size:12px}
 #printOut{display:none}
+/* ---- microphone sensitivity + auto level */
+.micbox{margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--s2)}
+.micbox label.micline{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;color:var(--mu);font-weight:600}
+.micbox input[type=range]{width:100%;margin:7px 0 2px}
+.micbox .row{margin-top:8px;gap:8px}
+.mic-gain-out{font-variant-numeric:tabular-nums;color:var(--tx);font-weight:700;min-width:48px;text-align:right}
+/* ---- phone / portrait polish */
+.view,.panel,.chordcard,.video,.staffbox{min-width:0}
+@media(max-width:760px){
+  .app{padding:0 11px 118px}
+  .panel{padding:15px;border-radius:18px}
+  .chordcard{gap:12px}
+  .dgrid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
+  .vgrid{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
+  .symgrid{grid-template-columns:repeat(auto-fill,minmax(126px,1fr))}
+  .vidframe{min-height:210px}
+}
+@media(max-width:560px){
+  header.top{gap:7px;padding:10px 0 6px}
+  .brand{font-size:20px;gap:7px}
+  .brand svg{width:26px;height:26px}
+  .status{padding:6px 9px;font-size:12px}
+  .status .meter{display:none}
+  .iconbtn{width:36px;height:36px}
+  .panel{padding:12px;border-radius:16px}
+  .panel+.panel,.panel+.row,.row+.panel{margin-top:10px}
+  h2{font-size:18px}
+  h3{font-size:12px}
+  .bigchord,.nowname{font-size:54px;min-height:58px}
+  .note{font-size:64px;min-height:64px}
+  .row{gap:8px}
+  .row>.btn,.row>.pill,.row>select,.row>input[type=search],.row>input[type=text],.row>input[type=number]{flex:1 1 100%;min-height:42px}
+  .row>.stepper{flex:0 0 auto}
+  .cta{padding:12px;gap:10px}
+  .cta p{min-width:0}
+  .cta>.btn,.cta>label.btn,.cta>button.btn{flex:1 1 100%;text-align:center;justify-content:center}
+  .seg{width:100%}
+  .seg button{flex:1;padding:8px 7px;font-size:13px}
+  .inst-row .pill{padding:6px 11px;font-size:13px}
+  .tuning-row select,.tuning-row input[type=text]{width:100%}
+  .rootgrid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .addgrid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .dgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .vgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pads{gap:9px}
+  .pad{min-height:174px;padding:9px 8px 7px;border-radius:15px}
+  .pad .padctl{gap:3px}
+  .pad .mini{width:21px;height:24px;font-size:9px}
+  .pad .mini.rec{padding:0 5px;font-size:9px}
+  .transport{grid-template-columns:1fr 1fr}
+  .transport .row,.loopbar .row{width:100%}
+  .lmeterwrap{flex-basis:100%}
+  .ltrim{flex:1 1 100%;white-space:normal}
+  .ltrim input{flex:1;width:auto;min-width:0}
+  .sheet{grid-template-columns:1fr;max-height:none}
+  .staffbox svg{min-width:620px}
+  .bar{border-radius:10px}
+  .beat{font-size:14px;padding:10px 1px}
+  .kv{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .kv div{padding:8px 10px}
+  .kv b{font-size:20px}
+  .cand{flex-wrap:wrap;padding:10px}
+  .cand .t{flex:1 1 100%}
+  .cand audio{width:100%}
+  .cand .btn{flex:1 1 100%}
+  .modalbox{padding:16px}
+  .vidtools{gap:7px}
+  .vidtools .fine{flex:1 1 100%}
+  .strumgrid{overflow-x:auto;padding-bottom:3px}
+  .pop{position:fixed;left:10px;right:10px;top:62px;width:auto;max-height:calc(100dvh - 160px);overflow:auto}
+  .toast{bottom:96px;width:max-content;max-width:calc(100vw - 20px);text-align:center}
+  nav.tabs{left:8px;right:8px;bottom:calc(7px + env(safe-area-inset-bottom))}
+  nav.tabs button{font-size:9.5px;padding:6px 1px;gap:2px}
+  nav.tabs button svg{width:18px;height:18px}
+  .tp{gap:8px}
+  .tp input[type=range]{flex:1 1 100%;min-width:0}
+  .playbtn{width:46px;height:46px}
+  .genrow label{flex:1 1 46%;min-width:0}
+  .genrow .btn{flex:1 1 100%}
+  .sheetbar{gap:6px}
+  .sheetbar .btn{flex:1 1 45%}
+  .quizq .qstaff{min-width:0}
+  .symcard{padding:8px 6px}
+  .symgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .micbox{padding:9px 10px}
+}
+@media(max-width:380px){
+  .brand{font-size:18px}
+  .status #micTxt{display:none}
+  nav.tabs button{font-size:8.5px}
+  .rootgrid,.addgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .pads{grid-template-columns:1fr}
+  .dgrid,.vgrid,.symgrid{grid-template-columns:1fr}
+  .bigchord,.nowname{font-size:48px;min-height:52px}
+}
 @media print{
   body{background:#fff;color:#000}
   .app,.toast,.modal{display:none!important}
@@ -421,6 +519,15 @@ button.status{cursor:pointer;color:var(--tx)}
     <div class="fine">Common values: 440 (modern), 432, 442 (orchestras), 415 (baroque). Pick a preset or type any value from 400 to 480 Hz.</div>
     <label style="margin-top:12px">Note names <span><select id="nameSys" aria-label="Note naming system"><option value="solfege">Do Re Mi</option><option value="both">Do Re Mi + letters</option><option value="letters">Letters (C D E)</option></select></span></label>
     <div class="fine">Fixed do: C = Do, D = Re, E = Mi, F = Fa, G = Sol, A = La, B = Si. Chord symbols stay as letters.</div>
+    <div class="micbox">
+      <label class="micline" for="micSens">Mic sensitivity <span class="mic-gain-out" id="micSensOut">0 dB</span></label>
+      <input type="range" id="micSens" class="mic-gain" min="-24" max="30" step="1" value="0" aria-label="Microphone sensitivity">
+      <div class="row">
+        <label class="fine" style="display:flex;gap:7px;align-items:center"><input type="checkbox" id="autoGainChk" checked> Auto level</label>
+        <button class="btn small" id="micCalBtn" type="button">Set level now</button>
+      </div>
+      <div class="fine" id="micLevelHint">Play or strum while setting the level. Aim for a strong green meter without red clipping.</div>
+    </div>
     <div class="fine" id="srInfo" style="margin-top:8px">Audio sample rate: –</div>
     <div class="row" style="margin-top:12px"><button class="btn small" id="installBtn" hidden>Install app</button><button class="btn small" id="mdHelp">Mic help</button></div>
     <div class="fine" style="margin-top:8px">Fretwork 2.0 · works offline · your audio never leaves this device.</div>
@@ -471,6 +578,15 @@ button.status{cursor:pointer;color:var(--tx)}
   </div>
   <div class="inst-row" id="chInst" style="margin-top:10px"></div>
   <div class="cta miconly" style="margin-top:6px"><p>Play strings one at a time, or strum. Fretwork names the chord, lets you add or remove notes, and suggests what to play next.</p><button class="btn primary mic-btn">Turn on microphone</button><label class="btn small" for="fileIn2">Use an audio file</label><input type="file" id="fileIn2" accept="audio/*" hidden></div>
+  <div class="micbox" id="chMicBox">
+    <label class="micline" for="chSens">Mic sensitivity <span class="mic-gain-out" id="chSensOut">0 dB</span></label>
+    <input type="range" id="chSens" class="mic-gain" min="-24" max="30" step="1" value="0" aria-label="Microphone sensitivity for chord detection">
+    <div class="row">
+      <button class="btn small" id="chCalBtn" type="button">Set level now</button>
+      <button class="btn small" id="chAutoBtn" type="button" aria-pressed="true">Auto level</button>
+      <span class="fine" id="chSensHint">Low reading? Raise this slider, or tap Set level then play.</span>
+    </div>
+  </div>
   <div class="panel" style="margin-top:12px">
     <div class="chordcard">
       <div>
@@ -553,6 +669,7 @@ button.status{cursor:pointer;color:var(--tx)}
       <label class="btn" for="vidFile">Use audio / video file</label><input type="file" id="vidFile" accept="audio/*,video/*" hidden>
     </div>
     <div class="err" id="vidErr" hidden></div>
+    <p class="fine" style="margin:8px 0 0">Tab capture works in Chrome and Edge on a computer: choose <b>This tab</b> (or the tab playing the video) and switch on <b>Share tab audio</b>. Phones cannot share tab audio — download the audio and use “Use audio / video file”.</p>
     <div id="vidWrap" hidden>
       <div class="vidframe" id="vidFrame"></div>
       <div class="row" id="vidMeta" style="justify-content:space-between;margin-top:10px"></div>
@@ -587,6 +704,11 @@ button.status{cursor:pointer;color:var(--tx)}
       <button class="btn" id="sgBlank">Blank sheet</button>
     </div>
     <div class="drop" id="sgDrop">or drop an audio file here</div>
+    <div class="row" style="margin-top:10px">
+      <input type="url" id="sgUrl" placeholder="Paste a direct audio link, YouTube or Vimeo" style="flex:1;min-width:220px" aria-label="Song web link">
+      <button class="btn" id="sgUrlGo">Open link</button>
+    </div>
+    <div class="fine" style="margin-top:6px">A direct MP3/OGG/M4A/WAV link is analysed here when the host allows it. YouTube and Vimeo open in the video panel: play the song, then use <b>Record tab audio</b> for the full track.</div>
     <div class="row" style="margin-top:14px"><input type="search" id="sgQ" placeholder="Search songs on the web (title, artist)" style="flex:1;min-width:200px"><button class="btn" id="sgGo">Search</button></div>
     <div class="err" id="sgErr" hidden></div>
     <div id="sgRes"></div>
@@ -622,6 +744,7 @@ button.status{cursor:pointer;color:var(--tx)}
       <div class="sheet" id="sgSheet"></div>
     </div>
     <div class="panel" id="sgEdit"></div>
+    <div id="sgExtra"></div>
     <div class="panel"><h2>Chord shapes in this song</h2><div class="dgrid" id="sgShapes"></div></div>
     <div class="panel"><div class="row"><button class="btn" id="sgCopy">Copy chord sheet</button><button class="btn" id="sgPrint">Print / save PDF</button><button class="btn" id="sgTxt">Download .txt</button><button class="btn" id="sgJson">Download .json</button></div></div>
   </div>
@@ -640,8 +763,8 @@ button.status{cursor:pointer;color:var(--tx)}
     </div>
     <div class="loopbar">
       <div class="lmeterwrap"><span class="fine">Input</span><span class="lmeter"><b id="loopMeter"></b></span><span class="fine" id="loopLevelTxt">–</span></div>
-      <label class="fine ltrim">Trim <input type="range" id="inGain" min="-18" max="18" step="1" value="0"><span id="inGainOut">0 dB</span></label>
-      <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn small primary" id="recSel">● Record / re-record</button><button class="btn small" id="overSel">＋ Layer</button><span class="fine" id="loopSummary">8 pads · 0 loops</span></div>
+      <label class="fine ltrim">Mic sensitivity <input type="range" id="inGain" class="mic-gain" min="-24" max="30" step="1" value="0"><span class="mic-gain-out" id="inGainOut">0 dB</span></label>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn small primary" id="recSel">● Record / re-record</button><button class="btn small" id="overSel">＋ Layer</button><button class="btn small" id="loopCalBtn" type="button">Auto level</button><span class="fine" id="loopSummary">8 pads · 0 loops</span></div>
     </div>
     <div class="row" style="margin-top:12px;gap:14px">
       <label class="fine" style="display:flex;gap:7px;align-items:center"><input type="checkbox" id="cleanChk" checked> Clean recordings (de-hum, normalise, fades)</label>
@@ -988,12 +1111,33 @@ function harmonicChroma(mags,binHz,fLo=55,fHi=1600){
   const at=i=>Math.max(0,mags[i]-floor);
   let peakMax=0;for(let i=lo;i<=hi;i++)if(mags[i]>peakMax)peakMax=mags[i];
   if(peakMax<=floor*2)return {chroma:new Array(12).fill(0),top:[],bassPc:-1,conf:0};
+  // Bass evidence comes from the lowest strong low-frequency peak, not the sum of
+  // every pitch class. Summing lets an octave G#3 outvote a lower E2 root.
+  const lowCh=new Array(12).fill(0);
+  const lowLo=Math.max(1,Math.ceil(55/binHz)),lowHi=Math.min(mags.length-2,Math.floor(330/binHz));
+  const lowPeaks=[];
+  for(let i=lowLo;i<=lowHi;i++){
+    const m=mags[i];if(m<=floor*1.15)continue;
+    if(m<mags[i-1]||m<mags[i+1])continue;
+    const f=i*binHz,mid=freqToMidi(f),r=Math.round(mid),dev=Math.abs(mid-r);
+    if(dev>0.38)continue;
+    const pc=((r%12)+12)%12;
+    lowCh[pc]+=m;
+    lowPeaks.push({pc,midi:r,a:m});
+  }
+  let lowBass=-1;
+  if(lowPeaks.length){
+    const lowMax=Math.max(...lowPeaks.map(x=>x.a));
+    const strong=lowPeaks.filter(x=>x.a>lowMax*0.18).sort((a,b)=>a.midi-b.midi);
+    if(strong.length)lowBass=strong[0].pc;
+  }
+  if(lowBass<0){const lowMax=Math.max(...lowCh);if(lowMax>peakMax*0.012)lowBass=lowCh.indexOf(lowMax)}
   const weights=[1,.85,.7,.58,.48,.4,.34,.29,.25,.22];
   const cand=[];
   const fundAmp=center=>{
     if(center>=mags.length-1)return 0;
     let best=0;
-    for(let d=-2;d<=2;d++){const idx=center+d;if(idx>0&&idx<mags.length){const a=at(idx);if(a>best)best=a}}
+    for(let d=-1;d<=1;d++){const idx=center+d;if(idx>0&&idx<mags.length){const a=at(idx);if(a>best)best=a}}
     return best;
   };
   for(let midi=36;midi<=88;midi++){
@@ -1008,11 +1152,11 @@ function harmonicChroma(mags,binHz,fLo=55,fHi=1600){
       if(best>peakMax*0.015)strong++;
     }
     if(wsum>0){
-      // A candidate must be supported by its fundamental or 2nd harmonic. Without
-      // this, a strong 3rd harmonic (a perfect fifth) creates a phantom note a
-      // twelfth below, which is the classic "Cadd11 instead of C" failure.
+      // A real note needs its own fundamental. Subharmonic phantoms can score well
+      // from the overtones of higher notes, so they are strongly suppressed.
       const f1=fundAmp(Math.round(f/binHz)),f2=fundAmp(Math.round(2*f/binHz));
-      const base=0.14+0.86*clamp(Math.max(f1,f2)/(peakMax*0.025),0,1);
+      if(f1<peakMax*0.007)continue;
+      const base=0.10+0.90*clamp(f1/(peakMax*0.045),0,1);
       const sc=(sum/wsum)*(0.55+0.09*Math.min(5,strong))*base;
       if(sc>peakMax*0.004)cand.push({midi,score:sc});
     }
@@ -1032,11 +1176,13 @@ function harmonicChroma(mags,binHz,fLo=55,fHi=1600){
   for(const c of top){const pc=((c.midi%12)+12)%12;chroma[pc]=Math.max(chroma[pc],c.score)}
   const cm=Math.max(...chroma)||1;
   const wts=chroma.map(v=>v/cm);
-  // Bass: the lowest strong root from the collapsed candidates. Using the raw
-  // list here would pick octave-down phantoms created by a strong 2nd harmonic.
+  // Bass: prefer the independent low-frequency estimate. The collapsed list is a
+  // fallback only, because octave-down phantoms can otherwise become the bass.
   const low=top.filter(c=>c.score>mx*0.32).sort((a,b)=>a.midi-b.midi)[0]||top[0]||cand[0];
+  let bassPc=lowBass;
+  if(bassPc<0||lowCh[bassPc]<=0)bassPc=((low.midi%12)+12)%12;
   const conf=clamp((top.filter(c=>c.score>mx*0.38).length-1)/3,0,1);
-  return {chroma:wts,top:top.map(c=>({midi:c.midi,f:midiToFreq(c.midi),a:c.score/mx})),bassPc:((low.midi%12)+12)%12,conf};
+  return {chroma:wts,top:top.map(c=>({midi:c.midi,f:midiToFreq(c.midi),a:c.score/mx})),bassPc:((bassPc%12)+12)%12,conf};
 }
 function chromaFrames(x,sr){
   const N=16384,hop=8192,win=new Float32Array(N);
@@ -1199,8 +1345,17 @@ function arpeggioPath(tuning,info,maxOff=7){
   return out;
 }
 const fingerForOff=o=>o===0?0:o<=2?1:o<=4?2:o<=6?3:4;
-const RECORDER={C5:'11111111',D5:'11111110',E5:'11111100',F5:'11111010','F#5':'11110110',G5:'11110000',A5:'11100000',Bb5:'11011000',B5:'11000000'};
-const FLUTE={B4:'1100000',A4:'1110000',G4:'1111000'};
+// 8 positions: thumb + holes 1–7. Basic baroque/English recorder chart (first octave).
+const RECORDER={C5:'11111111',D5:'11111110',E5:'11111100',F5:'11111011','F#5':'11110110',G5:'11110000',A5:'11100000',Bb5:'11011000',B5:'11000000',C6:'10100000'};
+// 7 positions: thumb, left 1–3, right 1–3. The right-pinky E♭ key is normally down;
+// it is omitted from this simple diagram. B♭ uses the common “one and one” fingering.
+const FLUTE={
+  C4:'1111111',D4:'1111111',E4:'1111110',F4:'1111100','F#4':'1111001',G4:'1111000',A4:'1110000',Bb4:'1100100',B4:'1100000',
+  C5:'0100000',D5:'1011111',E5:'1111110',F5:'1111100','F#5':'1111001',G5:'1111000',A5:'1110000',Bb5:'1100100',B5:'1100000',
+  C6:'0100000'
+};
+// Six-hole D tin whistle: D5–D6 (second octave uses the same holes, overblown).
+const TINWHISTLE={D5:'111111',E5:'111110','F#5':'111100',G5:'111000',A5:'110000',B5:'100000','C#5':'000000',D6:'111111'};
 
 // ================= circle of fifths helpers
 const MAJ_SCALE=[['1',0],['2',2],['3',4],['4',5],['5',7],['6',9],['7',11]];
@@ -1606,6 +1761,20 @@ function scaleTab(tuning,midis,maxOff=5){
   const path=[];for(let i=rows.length-1;i>=0;i--){path[i]=rows[i][bi].c;bi=rows[i][bi].bp}
   return {path,notes};
 }
+// Tab for an actual sequence (melody), with no added descending run.
+function tabForMidis(tuning,midis,maxOff=7){
+  const n=tuning.length;
+  const cand=midis.map(m=>{const a=[];for(let s=0;s<n;s++){const off=m-tuning[s];if(off>=0&&off<=maxOff)a.push({s,off})}return a});
+  if(!cand.length||cand.some(c=>!c.length))return null;
+  let prev=cand[0].map(c=>({c,cost:c.s*0.4+c.off*0.25,bp:-1})),rows=[prev];
+  for(let i=1;i<cand.length;i++){
+    const cur=cand[i].map(c=>{let best=1e9,bp=-1;prev.forEach((p,j)=>{const cost=p.cost+Math.abs(c.off-p.c.off)*0.45+Math.abs(c.s-p.c.s)*0.8+(c.off>5?1.2:0)-(c.off===0?0.3:0);if(cost<best){best=cost;bp=j}});return {c,cost:best,bp}});
+    rows.push(cur);prev=cur;
+  }
+  let bi=0;prev.forEach((p,j)=>{if(p.cost<prev[bi].cost)bi=j});
+  const path=[];for(let i=rows.length-1;i>=0;i--){path[i]=rows[i][bi].c;bi=rows[i][bi].bp}
+  return {path,notes:midis};
+}
 const fmtOff=o=>Number.isInteger(o)?String(o):Math.floor(o)+'½';
 function tabText(tuning,tab){
   const n=tuning.length,lines=[];
@@ -1644,7 +1813,9 @@ function noteEl(m){
 // ================= audio engine
 const Engine={
   ctx:null,input:null,capture:null,an:null,anF:null,stream:null,demoOsc:null,
-  inGainDb:(()=>{try{const v=+localStorage.getItem('fw-in-gain');if(Number.isFinite(v)&&v>=-18&&v<=18)return v}catch(e){}return 0})(),
+  inGainDb:(()=>{try{const v=+localStorage.getItem('fw-in-gain');if(Number.isFinite(v)&&v>=-24&&v<=30)return v}catch(e){}return 6})(),
+  autoGain:(()=>{try{return localStorage.getItem('fw-auto-gain')!=='0'}catch(e){return true}})(),
+  _agT:0,_calibrating:false,
   async ensureCtx(){
     if(!this.ctx){
       const C=window.AudioContext||window.webkitAudioContext;
@@ -1676,21 +1847,70 @@ const Engine={
     return this.ctx;
   },
   setInputGain(db){
-    this.inGainDb=clamp(Math.round(+db||0),-18,18);
+    this.inGainDb=clamp(Math.round(+db||0),-24,30);
     if(this.trim){try{this.trim.gain.setTargetAtTime(Math.pow(10,this.inGainDb/20),this.ctx.currentTime,0.02)}catch(e){this.trim.gain.value=Math.pow(10,this.inGainDb/20)}}
     try{localStorage.setItem('fw-in-gain',String(this.inGainDb))}catch(e){}
-    const o=document.getElementById('inGainOut');if(o)o.textContent=(this.inGainDb>0?'+':'')+this.inGainDb+' dB';
-    const i=document.getElementById('inGain');if(i&&+i.value!==this.inGainDb)i.value=this.inGainDb;
+    const txt=(this.inGainDb>0?'+':'')+this.inGainDb+' dB';
+    $$('.mic-gain').forEach(i=>{if(+i.value!==this.inGainDb)i.value=this.inGainDb});
+    $$('.mic-gain-out').forEach(o=>o.textContent=txt);
+    const chAuto=document.getElementById('chAutoBtn');if(chAuto)chAuto.textContent='Auto level: '+(this.autoGain?'on':'off');
+    $$('#autoGainChk,#chAutoBtn').forEach(b=>{if(b.type==='checkbox')b.checked=this.autoGain;else b.setAttribute('aria-pressed',String(this.autoGain))});
+  },
+  setAutoGain(on){
+    this.autoGain=!!on;
+    try{localStorage.setItem('fw-auto-gain',this.autoGain?'1':'0')}catch(e){}
+    this.setInputGain(this.inGainDb);
+    toast(this.autoGain?'Auto level is on — play and the mic will adapt':'Auto level is off',2200);
+  },
+  // Slow, safe automatic input gain. It only moves while the microphone is live
+  // and no take is being recorded, so a recording never changes level mid-note.
+  autoLevel(rms){
+    if(!this.autoGain||!this.stream||this._calibrating)return;
+    if(typeof Rec!=='undefined'&&Rec.started)return;
+    const now=performance.now();if(now-this._agT<700)return;this._agT=now;
+    if(!(rms>0.0015))return;
+    const target=0.085;
+    if(rms<target*0.55&&this.inGainDb<30)this.setInputGain(this.inGainDb+1);
+    else if((rms>target*1.45||this.peak>0.9)&&this.inGainDb>-24)this.setInputGain(this.inGainDb-1);
+  },
+  async calibrateInput(ms=1700){
+    if(!this.stream&&!await enableMic())return false;
+    await this.ensureCtx();
+    const old=this.inGainDb;this._calibrating=true;
+    const hint=document.getElementById('micLevelHint');if(hint)hint.textContent='Listening… play or strum at your normal level.';
+    toast('Setting the mic level — play at your normal volume for a moment.',3000);
+    let peak=0,sum=0,n=0;const t0=performance.now();
+    await new Promise(resolve=>{
+      const iv=setInterval(()=>{
+        const r=this.readTime();peak=Math.max(peak,this.peak);sum+=r*r;n++;
+        if(performance.now()-t0>=ms){clearInterval(iv);resolve()}
+      },55);
+    });
+    this._calibrating=false;
+    if(!n)return false;
+    const rms=Math.sqrt(sum/n);
+    // Aim for a healthy analysis level, then leave headroom for a loud strum.
+    let delta=20*Math.log10(0.085/Math.max(rms,0.0015));
+    delta=clamp(delta,-20,26);
+    if(peak>0.93)delta=Math.min(delta,-3);
+    const next=clamp(old+delta,-24,30);
+    this.setInputGain(next);
+    const set=this.inGainDb;
+    if(hint)hint.textContent='Level set to '+(set>0?'+':'')+set+' dB. A green meter is ideal; red means lower it.';
+    toast('Mic level set to '+(set>0?'+':'')+set+' dB'+(peak>0.93?' (was clipping)':''),3600);
+    return true;
   },
   async startMic(){
     await this.ensureCtx();
     if(this.stream)return;
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw Object.assign(new Error('unsupported'),{name:'Unsupported'});
     let stream;
-    try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}})}
+    const audio={echoCancellation:false,noiseSuppression:false,autoGainControl:false,channelCount:{ideal:1}};
+    try{stream=await navigator.mediaDevices.getUserMedia({audio})}
     catch(e){if(e&&(e.name==='OverconstrainedError'||e.name==='TypeError'))stream=await navigator.mediaDevices.getUserMedia({audio:true});else throw e}
     this.stream=stream;
     this.micSrc=this.ctx.createMediaStreamSource(stream);this.micSrc.connect(this.input);
+    this.setInputGain(this.inGainDb);
     this.setLive();
   },
   setLive(){document.body.classList.add('mic-on');$('#micTxt').textContent=this.stream?'Listening':this.fileEl?'Audio file':'Demo tone'},
@@ -1795,8 +2015,10 @@ const Engine={
     const mb=$('#meterB');if(mb)mb.style.width=w;
     const lm=$('#liMeter');if(lm)lm.style.width=w;
     const lp=$('#loopMeter');if(lp){lp.style.width=w;lp.classList.toggle('hot',hot)}
-    const lt=$('#loopLevelTxt');if(lt)lt.textContent=hot?'TOO HOT — lower Input trim':r<0.004?'quiet':'good';
-    if(hot&&!this._hotWarn){this._hotWarn=true;toast('Input is clipping. Lower the Input trim in the Loop tab, or move back from the mic.',4500)}else if(!hot&&this.peak<0.8)this._hotWarn=false;
+    const lt=$('#loopLevelTxt');if(lt)lt.textContent=hot?'TOO HOT — lower sensitivity':r<0.004?'quiet':'good';
+    const hint=$('#chSensHint');if(hint&&this.stream&&!this._calibrating)hint.textContent=hot?'Clipping — tap Auto level or lower sensitivity.':r<0.006?'Low reading — raise sensitivity or tap Set level.':'Level looks good. Play normally.';
+    if(hot&&!this._hotWarn){this._hotWarn=true;toast('Input is clipping. Lower Mic sensitivity, or move back from the mic.',4500)}else if(!hot&&this.peak<0.8)this._hotWarn=false;
+    this.autoLevel(r);
   },
   async demo(on){
     await this.ensureCtx();
@@ -1987,13 +2209,16 @@ const LI={
  mandolin:{label:'Mandolin',kind:'fret',max:12,range:[190,2200],tunings:{'G D A E':'G3 D4 A4 E5'}},
  banjo:{label:'Banjo',kind:'fret',max:12,range:[140,1100],tunings:{'Open G (4 strings; 5th string drone not shown)':'D3 G3 B3 D4','Plectrum (C G B D)':'C3 G3 B3 D4'}},
  bass:{label:'Bass',kind:'bass',max:12,range:[30,450],tunings:{'4-string (E A D G)':'E1 A1 D2 G2','5-string (B E A D G)':'B0 E1 A1 D2 G2'}},
+ doublebass:{label:'Double bass',kind:'bass',max:12,range:[28,400],tunings:{'Orchestral (E A D G)':'E1 A1 D2 G2','Solo (F# B E A)':'F#1 B1 E2 A2'}},
  oud:{label:'Oud',kind:'fret',fretless:true,max:9,range:[60,900],tunings:{'Arabic (C F A D G C)':'C2 F2 A2 D3 G3 C4','Arabic, up a tone (D G B E A D)':'D2 G2 B2 E3 A3 D4'}},
+ bouzouki:{label:'Bouzouki',kind:'fret',max:12,range:[110,1300],tunings:{'Irish (G D A D)':'G2 D3 A3 D4','Greek 3-course (C F A D)':'C3 F3 A3 D4'}},
  violin:{label:'Violin',kind:'bowed',max:7,range:[180,2400],tunings:{'G D A E':'G3 D4 A4 E5'}},
  viola:{label:'Viola',kind:'bowed',max:7,range:[120,1600],tunings:{'C G D A':'C3 G3 D4 A4'}},
  cello:{label:'Cello',kind:'bowed',max:7,range:[60,900],tunings:{'C G D A':'C2 G2 D3 A3'}},
  piano:{label:'Piano',kind:'piano',range:[50,1500]},
  recorder:{label:'Recorder',kind:'wind',base:72,range:[480,2300]},
- flute:{label:'Flute',kind:'wind',base:60,range:[240,2300]}
+ flute:{label:'Flute',kind:'wind',base:60,range:[240,2300]},
+ tinwhistle:{label:'Tin whistle',kind:'wind',base:74,range:[540,1900]}
 };
 const instTuning=(inst,key)=>{const L=LI[inst];if(!L.tunings)return null;const k=key&&L.tunings[key]?key:Object.keys(L.tunings)[0];return ordTuning(L.tunings[k])};
 
@@ -2060,6 +2285,10 @@ function windFingerSVG(kind,key){
     const S=sv('svg',{viewBox:'0 0 40 112','aria-hidden':'true'});S.append(sv('rect',{x:12,y:2,width:16,height:108,rx:6,fill:'none',stroke:'currentColor',opacity:.5}));
     const ys=[14,28,40,52,70,82,94,104];
     f.split('').forEach((c,i)=>{const th=i===0;const cx=th?8:20,cy=th?16:[28,40,52,70,82,94,104][i-1];S.append(sv('circle',{cx,cy,r:th?4.5:5,fill:c==='1'?'currentColor':'none',stroke:'currentColor','stroke-width':1.3}))});
+    return S}
+  if(kind==='tinwhistle'){const f=TINWHISTLE[key];if(!f)return null;
+    const S=sv('svg',{viewBox:'0 0 36 108','aria-hidden':'true'});S.append(sv('rect',{x:9,y:2,width:18,height:104,rx:7,fill:'none',stroke:'currentColor',opacity:.5}));
+    f.split('').forEach((c,i)=>{S.append(sv('circle',{cx:18,cy:16+i*15,r:5.2,fill:c==='1'?'currentColor':'none',stroke:'currentColor','stroke-width':1.3}))});
     return S}
   const f=FLUTE[key];if(!f)return null;
   const S=sv('svg',{viewBox:'0 0 70 60','aria-hidden':'true'});const lab=['Th','1','2','3','1','2','3'];
@@ -2151,7 +2380,7 @@ const Chords={
     this.redraw=instBar($('#chInst'),()=>App.inst,k=>App.setInst(k));
     this.render();
   },
-  clear(){this.notes=[];this.removed=[];this.manual.clear();this.cand=null;this.lastStrum=null;this.cur=null;this.render()},
+  clear(){this.notes=[];this.removed=[];this.manual.clear();this.cand=null;this.lastStrum=null;this.cur=null;this.smWts=null;this.smBass=-1;this.render()},
   analyze(){if(!Engine.live)return;if(this.mode==='note')this.analyzeNote();else this.analyzeStrum()},
   analyzeNote(){
     const e=Engine,rms=e.readTime(),now=performance.now();
@@ -2181,8 +2410,13 @@ const Chords={
   analyzeStrum(){
     const now=performance.now();if(now-this.lastFrame<110)return;this.lastFrame=now;
     const sp=Engine.spectrumNotes();
-    if(!sp){this.cand=null;this.strumCount=0;this.gap=true;return}
-    const res=nameChord(sp.wts,sp.bassPc,this.flats());if(!res.length)return;
+    if(!sp){this.cand=null;this.strumCount=0;this.gap=true;this.smWts=null;this.smBass=-1;return}
+    // A short pitch-class smoother removes single-frame flicker from a strum's
+    // attack without making chord changes feel late. Reset it on silence.
+    if(!this.smWts||this.smWts.length!==12)this.smWts=sp.wts.slice();
+    else this.smWts=this.smWts.map((v,i)=>v*0.42+sp.wts[i]*0.58);
+    this.smBass=sp.bassPc;
+    const res=nameChord(this.smWts,this.smBass,this.flats());if(!res.length)return;
     const heard=[];const seen=new Set();
     for(const p of sp.top){const m=Math.round(freqToMidi(p.f));if(seen.has(m))continue;seen.add(m);heard.push({midi:m,f:p.f})}
     this.notes=heard;this.manual.clear();this.removed=[];
@@ -2663,7 +2897,7 @@ const Loop={
     $('#clearAll').onclick=()=>this.clearAll();
     $('#recSel').onclick=()=>{const p=this.pads[this.sel];if(!p)return;if(p.state)this.finishRec(p);else this.recordPad(p)};
     $('#overSel').onclick=()=>{const p=this.pads[this.sel];if(!p)return;if(!p.buffer)return toast('Record a take first, then layer over it');this.overdub(p)};
-    const ig=$('#inGain');if(ig){ig.value=Engine.inGainDb;Engine.setInputGain(Engine.inGainDb);ig.oninput=()=>Engine.setInputGain(+ig.value)}
+    const ig=$('#inGain');if(ig)ig.value=Engine.inGainDb;
     $('#cleanChk').onchange=e=>this.clean=e.target.checked;
     $('#gateSel').onchange=e=>this.gate=e.target.value;
     $('#padFile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(f)this.importFile(this.pads[this.sel],f)};
@@ -3239,6 +3473,8 @@ const Song={
     src.addEventListener('drop',e=>{const f=e.dataTransfer&&e.dataTransfer.files[0];if(f)this.loadFile(f)});
     $('#sgRec').onclick=()=>this.toggleRecord();
     $('#sgBlank').onclick=()=>this.fromChords(['C','G','Am','F'],{title:'New sheet'});
+    $('#sgUrlGo').onclick=()=>this.loadUrl();
+    $('#sgUrl').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();this.loadUrl()}});
     $('#sgGo').onclick=()=>this.search();
     $('#sgQ').addEventListener('keydown',e=>{if(e.key==='Enter')this.search()});
     $('#sgUse').onclick=()=>this.manual();
@@ -3264,6 +3500,28 @@ const Song={
   disp(name){if(!name)return null;const p=parseChord(name);return p?chordName(p,this.shift,this.flatNow()):name},
   fromDisp(name){const p=parseChord(name);if(!p)return name;return chordName(p,-this.shift,this.S.flat)},
   // ----- loading
+  async loadUrl(){
+    const u=($('#sgUrl').value||'').trim();if(!u)return;
+    this.err('');
+    if(!/^https?:\/\//i.test(u))return this.err('Paste a full http:// or https:// link.');
+    const vid=Video.parse(u);
+    if(vid&&(vid.kind==='youtube'||vid.kind==='vimeo')){
+      $('#vidUrl').value=u;App.show('song');Video.load();
+      return toast('Video ready. Play it, then tap Record tab audio for the full song.',5200);
+    }
+    this.prog('Downloading from the link…',4);
+    try{
+      const resp=await fetch(u,{mode:'cors'});
+      if(!resp.ok)throw new Error('HTTP '+resp.status);
+      const blob=await resp.blob();
+      if(!blob.size)throw new Error('empty file');
+      const name=(u.split('?')[0].split('/').pop()||'web-audio').replace(/[^\w.\-]+/g,'-');
+      await this.loadFile(new File([blob],name,{type:blob.type||'audio/mpeg'}),{title:name.replace(/\.[^.]+$/,''),artist:'',url:u});
+    }catch(e){
+      this.hideProg();
+      this.err('That host would not let the app download the audio (CORS or login required). Download the file and use “Load audio file”, or use a YouTube/Vimeo link with tab capture.');
+    }
+  },
   async loadFile(file,meta){
     this.err('');this.reset();this.prog('Reading file…',3);
     try{
@@ -3291,6 +3549,8 @@ const Song={
      const tFirst=fi*ch.hopSec+0.1,bl=60/bt.bpm;bt.offset+=Math.floor((tFirst-bt.offset)/bl)*bl;}
     this.prog('Choosing chords…',94);await tick0();
     this.S={title:meta.title,artist:meta.artist||'',url:meta.url||null,hasAudio:!!meta.url,dur:x.length/sr,bpm:bt.bpm,offset:bt.offset,ts:4,frames,hopSec:ch.hopSec,delay:ch.winSec/2,key:{tonic:k0.tonic,minor:k0.minor,name:k0.name},flat:flatKeyPref(k0.tonic,k0.minor),beatChords:[],marks:{},tuneCents:Math.round(ch.tune*100)};
+    this.prog('Following the melody and solo line…',96);await tick0();
+    try{this.S.melody=melodyFromAudio(x,sr,{bpm:bt.bpm,minMidi:48,maxMidi:91})}catch(e){console.warn('[Fretwork] melody extraction failed',e);this.S.melody=[]}
     this.recompute();this.hideProg();
     if(!this.S.beatChords.length){this.err('No clear beats were found in that audio.');return}
     this.show();
@@ -3350,15 +3610,21 @@ const Song={
     out.replaceChildren();
     if(local.length){out.append(h('h3',{style:'margin-top:14px'},'In the starter library'));const g=h('div',{class:'cands'});for(const e of local)g.append(h('div',{class:'cand'},h('div',{class:'t'},h('b',{},e.t),h('span',{},e.a+' · '+e.key+' · '+e.bpm+' BPM')),h('button',{class:'btn small primary',onclick:()=>this.loadLib(e)},'Open chords')));out.append(g)}
     out.append(h('h3',{style:'margin-top:14px'},'Web results'));
+    out.append(h('p',{class:'fine'},'Apple’s public catalogue supplies a 30-second preview. For the whole song, paste its YouTube/Vimeo link in the Video panel, or load a downloaded audio/video file.'));
     if(err||!res.length)out.append(h('p',{class:'fine'},err?'Web search is blocked or offline here. Use the links below.':'No matches. Try the title and artist.'));
     const g=h('div',{class:'cands'});
     for(const r of res){
       const meta=[r.artistName,r.collectionName,(r.releaseDate||'').slice(0,4),r.primaryGenreName,r.trackTimeMillis?mmss(r.trackTimeMillis/1000):''].filter(Boolean).join(' · ');
+      const fullQ=encodeURIComponent((r.trackName||'')+' '+(r.artistName||''));
       g.append(h('div',{class:'cand',style:'flex-wrap:wrap'},
         r.artworkUrl100?h('img',{src:r.artworkUrl100,width:52,height:52,alt:'',style:'border-radius:10px'}):null,
         h('div',{class:'t'},h('b',{},r.trackName),h('span',{},meta)),
         h('button',{class:'btn small',onclick:()=>this.analyzePreview(r)},'Detect chords (30 s preview)'),
-        r.previewUrl?h('audio',{controls:true,preload:'none',src:r.previewUrl,style:'width:100%;height:34px'}):null));
+        r.previewUrl?h('audio',{controls:true,preload:'none',src:r.previewUrl,style:'width:100%;height:34px'}):null,
+        h('div',{class:'row',style:'gap:6px;width:100%'},h('span',{class:'fine'},'Full song:'),
+          linkOut('YouTube','https://www.youtube.com/results?search_query='+fullQ),
+          linkOut('Spotify','https://open.spotify.com/search/'+fullQ),
+          r.trackViewUrl?linkOut('Apple Music',r.trackViewUrl):null)));
     }
     out.append(g);out.append(h('p',{class:'fine',style:'margin-top:12px'},'Find written chords and tabs for this song:'));out.append(webLinks(q));
   },
@@ -3410,7 +3676,7 @@ const Song={
     this.renderAll();
     $('#sgMain').scrollIntoView({behavior:'smooth',block:'start'});
   },
-  renderAll(){this.renderHead();this.renderCtl();this.renderSheet();this.renderShapes();this.renderEdit();this.lastViz='';this.updateNow(this.lastIdx<0?0:this.lastIdx)},
+  renderAll(){this.renderHead();this.renderCtl();this.renderSheet();this.renderShapes();this.renderEdit();this.renderAnalysis();this.lastViz='';this.updateNow(this.lastIdx<0?0:this.lastIdx)},
   keyText(){const S=this.S;if(!S.key)return '—';const nm=this.flatNow()?NOTES_F:NOTES;return nm[(S.key.tonic+this.shift+120)%12]+(S.key.minor?' minor':' major')},
   renderHead(){
     const S=this.S;$('#sgTitle').textContent=S.title+(S.artist?' — '+S.artist:'');
@@ -3466,6 +3732,98 @@ const Song={
     const key=name+'|'+App.inst+'|'+this.capo;
     if(key!==this.lastViz){this.lastViz=key;const v=$('#sgViz');v.replaceChildren();if(cur)v.append(chordVisual(name,App.inst,this.capo))}
   },
+  altNames(name){
+    const c=chordFor(name);if(!c)return [];
+    const w=new Array(12).fill(0);
+    for(const pc of c.info.pcs)w[((pc%12)+12)%12]=1;
+    w[((c.info.rootPc%12)+12)%12]=1.08;
+    return nameChord(w,c.info.rootPc,this.flatNow()).filter(r=>r.name!==name&&!r.partial).slice(0,3).map(r=>r.name);
+  },
+  recommendations(){
+    const uniq=this.uniqueNames();const last=uniq[uniq.length-1];
+    const p=last?parseChord(last):null;if(!p)return [];
+    const key=this.S.key?{rootPc:(this.S.key.tonic+this.shift+120)%12,minor:this.S.key.minor}:null;
+    return recommendChords({name:last,root:p.root,rootPc:p.root,pcs:[...chordSetOf(last)]},key,true).chords.slice(0,6);
+  },
+  melodyTab(notes){
+    const L=LI[App.inst];if(!(L.kind==='fret'||L.kind==='bowed'||L.kind==='bass'))return null;
+    const tuning=instTuning(App.inst);if(!tuning)return null;
+    const midis=notes.filter(n=>!n.rest).map(n=>n.midi);
+    if(!midis.length)return null;
+    const tab=tabForMidis(tuning,midis,L.max||12);
+    return tab?tabText(tuning,tab):null;
+  },
+  melodyText(notes){
+    return notes.map(n=>n.rest?'(rest '+(n.beats||1)+'♩)':noteName(n.midi)+(n.legato?'~':' ')).join(' ').replace(/\s+/g,' ').trim();
+  },
+  toSheet(notes){
+    Sheet.notes=notes.map(n=>n.rest?{rest:true,beats:n.beats||1,beatsExact:n.beatsExact}:{midi:n.midi,beats:n.beats||1,beatsExact:n.beatsExact,legato:!!n.legato});
+    Sheet.ts=this.S.ts;Sheet.tempo=Math.round(this.S.bpm);Sheet.title=(this.S.title||'Song')+' — melody';
+    App.show('sheet');Sheet.render();toast('Melody opened in the notes sheet');
+  },
+  renderAnalysis(){
+    const box=$('#sgExtra');if(!box)return;box.replaceChildren();
+    const S=this.S;if(!S)return;
+    const notes=S.melody||[],pitchNotes=notes.filter(n=>!n.rest);
+    if(pitchNotes.length){
+      const panel=h('div',{class:'panel'});
+      const lo=Math.min(...pitchNotes.map(n=>n.midi)),hi=Math.max(...pitchNotes.map(n=>n.midi));
+      panel.append(h('div',{class:'row',style:'justify-content:space-between;gap:8px'},
+        h('h2',{style:'margin:0'},'Melody / solo line'),
+        h('span',{class:'chip tag'},pitchNotes.length+' notes · '+noteName(lo)+'–'+noteName(hi))));
+      panel.append(h('p',{class:'fine',style:'margin:6px 0 10px'},'The top line is transcribed from the recording. Legato joins are marked with ~. Chords are detected separately, so a busy mix may need a little editing.'));
+      panel.append(h('div',{class:'staffbox'},staffSVG(notes.slice(0,64),{ts:S.ts,width:Math.max(720,Math.min(1700,150+Math.min(64,notes.length)*56)),label:'Detected melody'})));
+      if(notes.length>64)panel.append(h('p',{class:'fine'},'Staff shows the first 64 events. The note list, MIDI and sheet include all '+notes.length+'.'));
+      const chips=h('div',{class:'chips',style:'margin-top:10px'});
+      pitchNotes.slice(0,48).forEach(n=>chips.append(h('button',{class:'chip',onclick:()=>Engine.playMidis([n.midi],{strum:0,dur:0.8})},h('b',{},noteName(n.midi)),h('span',{},(n.beats||1)+'♩'+(n.legato?' legato':'')))));
+      panel.append(chips);
+      const L=LI[App.inst];
+      if(L.kind==='wind'){
+        const row=h('div',{class:'row',style:'gap:6px;margin-top:12px;overflow-x:auto;flex-wrap:nowrap'});
+        for(const n of pitchNotes.slice(0,18)){const k=noteKey(n.midi),f=windFingerSVG(App.inst,k);row.append(h('div',{style:'text-align:center;min-width:54px'},f?h('div',{style:'width:46px;margin:0 auto'},f):h('div',{class:'fine',style:'height:34px;padding-top:10px'},'—'),h('div',{class:'dtab'},k)))}
+        const windHint=App.inst==='flute'
+          ?' Flute: keep the right-pinky E♭ key down on most notes (not drawn here).'
+          :App.inst==='recorder'
+            ?' Recorder: the diagram covers C5–B5 plus high C6.'
+            :' Tin whistle: the diagram covers D5–D6; half-hole accidentals outside that scale.';
+        panel.append(h('h3',{style:'margin:12px 0 0'},L.label+' fingerings'),row,h('p',{class:'fine'},'● covered, ○ open, — outside the built-in chart.'+windHint+' The staff and MIDI always cover the complete line; use the tab/notation views for notes not charted.'));
+      }else if(L.kind==='piano'){
+        panel.append(h('h3',{style:'margin:12px 0 0'},'Piano'),h('div',{class:'diagram piano',style:'width:100%;max-width:720px'},pianoSVG(new Set(pitchNotes.map(n=>n.midi)),S.key?S.key.tonic:0,4,48)),h('p',{class:'fine'},'Lit keys are the notes used by the detected line.'));
+      }else{
+        const tb=this.melodyTab(notes);
+        if(tb)panel.append(h('h3',{style:'margin:12px 0 0'},L.label+' tab'),h('pre',{class:'tab'},tb));
+      }
+      panel.append(h('div',{class:'row',style:'margin-top:12px'},
+        h('button',{class:'btn primary',onclick:()=>Engine.playSeq(notes,{bpm:S.bpm,vol:0.17})},'▶ Play melody'),
+        h('button',{class:'btn',onclick:()=>Engine.stopVoices()},'Stop'),
+        h('button',{class:'btn',onclick:()=>saveBlob(new Blob([writeMidiFile(notes,S.bpm,S.ts)],{type:'audio/midi'}),this.fileBase()+'-melody.mid')},'Export MIDI'),
+        h('button',{class:'btn',onclick:()=>this.toSheet(notes)},'Open in notes sheet'),
+        h('button',{class:'btn',onclick:()=>copyText(this.melodyText(notes))},'Copy note names')));
+      box.append(panel);
+    }else if(S.hasAudio){
+      box.append(h('div',{class:'panel'},h('h2',{},'Solo / melody line'),h('p',{class:'hint'},'No clear single-note line was found. Try a recording with one instrument or voice in front, or use a cleaner section. You can still use the chords, shapes and recommendations below.')));
+    }
+    const uniq=this.uniqueNames(),altPanel=h('div',{class:'panel'},h('h2',{},'Alternative names & next chords'));
+    let gotAlt=false;
+    if(uniq.length){
+      const list=h('div',{class:'cands'});
+      for(const nm of uniq.slice(0,20)){
+        const alts=this.altNames(nm);if(!alts.length)continue;gotAlt=true;
+        list.append(h('div',{class:'cand'},h('div',{class:'t'},h('b',{},nm),h('span',{},'also called '+alts.join(' · ')))));
+      }
+      if(gotAlt)altPanel.append(h('p',{class:'hint'},'These are enharmonic or simplified names for the same detected notes. The chord sheet keeps the clearest spelling.'),list);
+    }
+    const recs=this.recommendations();
+    if(recs.length){
+      const last=uniq[uniq.length-1];
+      const row=h('div',{class:'chips',style:'margin-top:10px'});
+      for(const r of recs){
+        row.append(h('button',{class:'chip',title:r.reason||'',onclick:()=>Engine.playChordSeq([last,r.name].filter(Boolean),{bpm:Math.round(this.S.bpm),beats:2})},h('b',{},r.name),h('span',{},r.roman+(r.reason?' · '+r.reason:''))));
+      }
+      altPanel.append(h('h3',{style:'margin-top:12px'},'Next after '+last),h('p',{class:'fine'},'Tap a chord to hear the move. Suggestions are filtered through the detected key.'),row);
+    }
+    if(gotAlt||recs.length)box.append(altPanel);
+  },
   renderShapes(){
     const g=$('#sgShapes');g.replaceChildren();
     for(const nm of this.uniqueNames().slice(0,30)){
@@ -3511,7 +3869,7 @@ const Song={
     for(let b=0;b<nb;b+=4){if(S.marks&&S.marks[b*ts])L.push('['+S.marks[b*ts]+']');L.push('| '+bars.slice(b,b+4).join(' | ')+' |')}
     return L.join('\n');
   },
-  json(){const S=this.S;return {title:S.title,artist:S.artist,key:this.keyText(),bpm:S.bpm,beatsPerBar:S.ts,capo:this.capo,transpose:this.shift,chords:S.beatChords.map((c,i)=>({bar:Math.floor(i/S.ts)+1,beat:i%S.ts+1,timeSec:+this.beatT(i).toFixed(2),chord:c?this.disp(c):null}))}},
+  json(){const S=this.S;return {title:S.title,artist:S.artist,key:this.keyText(),bpm:S.bpm,beatsPerBar:S.ts,capo:this.capo,transpose:this.shift,tuneCents:S.tuneCents||0,chords:S.beatChords.map((c,i)=>({bar:Math.floor(i/S.ts)+1,beat:i%S.ts+1,timeSec:+this.beatT(i).toFixed(2),chord:c?this.disp(c):null})),melody:(S.melody||[]).map(n=>n.rest?{rest:true,beats:n.beats,beatsExact:n.beatsExact}:{midi:n.midi,note:noteName(n.midi),beats:n.beats,beatsExact:n.beatsExact,legato:!!n.legato,start:n.start,end:n.end})}},
   print(){
     const po=$('#printOut');po.replaceChildren(h('h1',{},this.S.title),h('pre',{},this.textSheet()),h('h2',{},'Chord shapes (guitar, low to high string)'),
       h('div',{},this.uniqueNames().map(nm=>{const p=parseChord(nm);if(!p)return null;const sh=guitarShape(((p.root-this.capo)%12+12)%12,p.type);return h('div',{},nm+'   '+tabString(sh.frets))})));
@@ -3878,35 +4236,91 @@ function staffSVG(notes,opt={}){
   return g;
 }
 function melodyFromAudio(x,sr,opt={}){
-  const bpm=opt.bpm||90,minMidi=opt.minMidi||40,maxMidi=opt.maxMidi||86;
-  const f=Math.max(1,Math.round(sr/11025)),xs=downsample(x,f),sr2=sr/f;
-  const win=1024,hop=256,frames=[];
+  const bpm=clamp(+opt.bpm||90,30,260),spb=60/bpm;
+  const target=8000,f=Math.max(1,Math.round(sr/target)),xs=downsample(x,f),sr2=sr/f;
+  const win=1024,hop=256,hopSec=hop/sr2;
+  const minMidi=clamp(+opt.minMidi||45,24,96),maxMidi=clamp(+opt.maxMidi||88,minMidi+6,108);
+  const frames=[];
   for(let i=0;i+win<=xs.length;i+=hop){
-    const seg=xs.subarray(i,i+win);let e=0;for(let k=0;k<seg.length;k++)e+=seg[k]*seg[k];
+    const seg=xs.subarray(i,i+win);let e=0;
+    for(let k=0;k<seg.length;k++)e+=seg[k]*seg[k];
     const rms=Math.sqrt(e/seg.length);
-    if(rms<0.006){frames.push({midi:null});continue}
-    const r=yin(seg,sr2,midiToFreq(minMidi),midiToFreq(maxMidi),0.12);
-    if(r&&r.prob>0.70&&r.freq>0&&r.freq<1500)frames.push({midi:Math.round(freqToMidi(r.freq))});
-    else frames.push({midi:null});
-  }
-  const hopSec=hop/sr2,minFrames=Math.max(3,Math.round(0.085/hopSec));
-  const out=[];let cur=null,count=0,silent=0;
-  const flush=()=>{
-    if(cur!=null&&count>=minFrames){
-      const beats=Math.max(0.5,Math.round((count*hopSec)/(60/bpm)*2)/2);
-      if(out.length&&out[out.length-1].midi===cur)out[out.length-1].beats+=beats;
-      else out.push({midi:cur,beats});
+    let midi=null,prob=0;
+    if(rms>=0.0022){
+      // YIN is a little slower than an FFT, but it is much better at tracking a
+      // single moving line and it reports a real confidence value for rests.
+      const r=yin(seg,sr2,midiToFreq(minMidi-1),midiToFreq(maxMidi+1),0.12);
+      if(r&&r.prob>0.58&&r.freq>0){
+        const m=freqToMidi(r.freq);
+        if(m>=minMidi-1&&m<=maxMidi+1){midi=clamp(m,minMidi,maxMidi);prob=r.prob}
+      }
     }
-    cur=null;count=0;
-  };
-  for(const fr of frames){
-    if(fr.midi==null){if(cur!=null){silent++;if(silent>=3)flush()}continue}
-    if(cur!=null&&fr.midi===cur){count++;silent=0;continue}
-    if(cur!=null&&(fr.midi===cur+12||fr.midi===cur-12)){cur=fr.midi;count++;silent=0;continue}
-    if(cur!=null)flush();
-    cur=fr.midi;count=1;silent=0;
+    frames.push({rms,midi,prob,t:i*hopSec});
   }
-  flush();
+  if(!frames.length)return [];
+  // A percentile noise gate adapts to phone microphones and quiet recordings.
+  const rs=frames.map(fr=>fr.rms).sort((a,b)=>a-b);
+  const floorR=rs[Math.min(rs.length-1,Math.floor(rs.length*0.22))]||0;
+  const gate=Math.max(0.0021,Math.min(0.018,floorR*2.4));
+  let track=frames.map(fr=>(fr.midi!=null&&fr.rms>=gate&&fr.prob>=0.58)?fr.midi:null);
+  // Remove isolated frames, then apply a tiny median filter. This keeps real
+  // articulations while rejecting one-frame octave jumps and bow noise.
+  track=track.map((m,i)=>{
+    if(m==null)return null;
+    const a=[];for(let j=Math.max(0,i-2);j<=Math.min(track.length-1,i+2);j++)if(track[j]!=null)a.push(track[j]);
+    if(!a.length)return null;
+    const med=median(a);
+    return Math.abs(m-med)<=2.1?med:null;
+  });
+  // Keep real octave leaps. YIN already reports the fundamental, and the median
+  // passes above remove one-frame octave glitches. Folding every 12-semitone move
+  // here would erase genuine register changes in the melody.
+  for(let i=0;i<track.length;i++)if(track[i]!=null)track[i]=Math.round(track[i]);
+  // A second, shorter median pass removes tiny pitch wobble without smearing a slide.
+  track=track.map((m,i)=>{
+    if(m==null)return null;
+    const a=[];for(let j=Math.max(0,i-1);j<=Math.min(track.length-1,i+1);j++)if(track[j]!=null)a.push(track[j]);
+    return a.length?Math.round(median(a)):null;
+  });
+  const minFrames=Math.max(2,Math.round(0.065/hopSec));
+  const gapFrames=Math.max(2,Math.round(0.085/hopSec));
+  const segs=[];let seg=null,quiet=0;
+  for(let i=0;i<track.length;i++){
+    const m=track[i];
+    if(m==null){
+      if(seg){quiet++;if(quiet>=gapFrames){segs.push(seg);seg=null;quiet=0}}
+      continue;
+    }
+    quiet=0;
+    if(!seg){seg={start:i,end:i+1,vals:[m]};continue}
+    const c=median(seg.vals);
+    if(Math.abs(m-c)<=0.8){seg.vals.push(m);seg.end=i+1;continue}
+    // Only accept a pitch change that lasts at least two more frames. Otherwise
+    // it is an attack transient or a stray harmonic.
+    const ok=(track[i+1]!=null&&Math.abs(track[i+1]-m)<0.9)&&(track[i+2]!=null&&Math.abs(track[i+2]-m)<0.9);
+    if(ok){seg.end=i;segs.push(seg);seg={start:i,end:i+1,vals:[m]}}
+    else seg.end=i+1;
+  }
+  if(seg)segs.push(seg);
+  const qBeat=sec=>Math.max(0.25,Math.round(sec/spb*4)/4);
+  const out=[];let prev=null;
+  for(const s of segs){
+    const dur=(s.end-s.start)*hopSec;
+    if(dur<0.055||s.end-s.start<minFrames)continue;
+    const midi=Math.round(median(s.vals));
+    const gapFrames=prev?(s.start-prev.endFrame):0;
+    const gapSec=gapFrames*hopSec;
+    if(prev&&prev.midi===midi&&gapFrames<Math.max(1,Math.round(0.10/hopSec))){
+      prev.beats+=qBeat(dur);prev.beatsExact+=dur/spb;prev.end=s.end;prev.endFrame=s.end;prev.durSec+=dur;prev.legato=true;continue;
+    }
+    if(prev&&gapSec>=0.16){
+      const rb=Math.max(0.25,Math.round(gapSec/spb*4)/4);
+      out.push({rest:true,beats:rb,beatsExact:gapSec/spb});
+    }
+    const n={midi,beats:qBeat(dur),beatsExact:+(dur/spb).toFixed(4),legato:prev?gapSec<0.075:false,durSec:+dur.toFixed(3),start:+((s.start*hopSec)).toFixed(3),end:+((s.end*hopSec)).toFixed(3),endFrame:s.end};
+    out.push(n);prev=n;
+    if(out.length>=1200)break;
+  }
   return out;
 }
 function writeMidiFile(notes,bpm=90,ts=4){
@@ -3920,11 +4334,13 @@ function writeMidiFile(notes,bpm=90,ts=4){
   events.push({tick:0,order:0,data:[0xC0,0x00]});
   let tick=0;
   for(const n of notes){
-    if(n.rest){tick+=Math.round((n.beats||1)*PPQ);continue}
-    const dur=Math.max(30,Math.round((n.beats||1)*PPQ*0.92));
+    // Use the unquantised duration for MIDI timing; notation keeps the neat value.
+    const span=Math.max(1,Math.round((n.beatsExact||n.beats||1)*PPQ));
+    if(n.rest){tick+=span;continue}
+    const dur=Math.max(30,Math.round(span*(n.legato?0.998:0.90)));
     events.push({tick,order:1,data:[0x90,clamp(n.midi,0,127),96]});
     events.push({tick:tick+dur,order:0,data:[0x80,clamp(n.midi,0,127),0]});
-    tick+=Math.max(30,Math.round((n.beats||1)*PPQ));
+    tick+=span;
   }
   events.push({tick,order:0,data:[0xFF,0x2F,0x00]});
   events.sort((a,b)=>a.tick-b.tick||a.order-b.order);
@@ -4125,23 +4541,28 @@ const Video={
     if(!window.MediaRecorder){return this.err('This browser cannot record audio. Use “Use audio / video file” instead.')}
     let stream;
     try{
-      stream=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:1},audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},systemAudio:'include',windowAudio:'include',preferCurrentTab:false});
+      const opts={video:{frameRate:1},audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false,channelCount:{ideal:2}},systemAudio:'include',windowAudio:'include',preferCurrentTab:true,selfBrowserSurface:'include',surfaceSwitching:'include',monitorTypeSurfaces:'include'};
+      try{stream=await navigator.mediaDevices.getDisplayMedia(opts)}
+      catch(e){ // older Chromium builds reject the newer hint keys
+        if(e&&(e.name==='TypeError'||e.name==='OverconstrainedError'))stream=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:1},audio:true,preferCurrentTab:true});
+        else throw e;
+      }
     }catch(e){
-      return this.err('Screen/tab sharing was cancelled or blocked. Open this app in its own browser tab, click “Record tab audio”, choose the tab that is playing the video, and switch on “Share tab audio”.');
+      return this.err('Screen/tab sharing was cancelled or blocked. Open this app in its own browser tab, click “Record tab audio”, choose the tab that is playing the video, and switch on “Share tab audio”. On iPhone/iPad, use “Use audio / video file” instead — iOS does not share tab audio.');
     }
     const at=stream.getAudioTracks();
     if(!at.length){
       stream.getTracks().forEach(t=>{try{t.stop()}catch(e){}});
-      return this.err('No audio was shared. Repeat “Record tab audio” and tick “Share tab audio” (Chrome/Edge).');
+      return this.err('No audio was shared. Repeat “Record tab audio” and tick “Share tab audio” / “Share system audio” (Chrome or Edge). Muted tabs and DRM-protected players can also block capture.');
     }
     this.stream=stream;this.chunks=[];
-    const mime=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?'audio/webm;codecs=opus':MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':'';
-    try{this.mr=mime?new MediaRecorder(new MediaStream([at[0]]),{mimeType:mime}):new MediaRecorder(new MediaStream([at[0]]))}
+    const mime=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'].find(t=>{try{return window.MediaRecorder&&MediaRecorder.isTypeSupported(t)}catch(e){return false}})||'';
+    try{this.mr=mime?new MediaRecorder(new MediaStream([at[0]]),{mimeType:mime,audioBitsPerSecond:128000}):new MediaRecorder(new MediaStream([at[0]]))}
     catch(e){this.closeStream();return this.err('Could not start the audio recorder here. Use “Use audio / video file” instead.')}
     this.mr.ondataavailable=e=>{if(e.data&&e.data.size)this.chunks.push(e.data)};
     this.mr.onstop=()=>this.finishCapture();
     at[0].addEventListener('ended',()=>{if(this.recording)this.stopCapture()});
-    this.mr.start(250);
+    this.mr.start(500);
     this.recording=true;this.capStart=Date.now();
     $('#vidCap').textContent='■ Stop capture (0:00)';
     this.capTimer=setInterval(()=>{
@@ -4571,6 +4992,37 @@ const App={
     $('#mdStop').onclick=()=>{Engine.stopFile();hideMicHelp()};
     $('#micDlg').addEventListener('click',e=>{if(e.target.id==='micDlg')hideMicHelp()});
     Tuner.init();Chords.init();Loop.init();Song.init();Learn.init();Sheet.init();Video.init();
+    Engine.setInputGain(Engine.inGainDb);
+    $$('.mic-gain').forEach(el=>{
+      if(+el.value!==Engine.inGainDb)el.value=Engine.inGainDb;
+      el.addEventListener('input',()=>Engine.setInputGain(+el.value));
+    });
+    const ag=$('#autoGainChk');if(ag){ag.checked=Engine.autoGain;ag.onchange=()=>Engine.setAutoGain(ag.checked)}
+    const chAg=$('#chAutoBtn');if(chAg){chAg.setAttribute('aria-pressed',String(Engine.autoGain));chAg.onclick=()=>Engine.setAutoGain(!Engine.autoGain)}
+    const mc=$('#micCalBtn');if(mc)mc.onclick=()=>Engine.calibrateInput();
+    const cc=$('#chCalBtn');if(cc)cc.onclick=()=>Engine.calibrateInput();
+    const lc=$('#loopCalBtn');if(lc)lc.onclick=()=>Engine.calibrateInput();
+    // PWA install prompt. Chrome/Edge fire beforeinstallprompt; iOS uses the
+    // browser's Share > Add to Home Screen flow, so keep the hint there.
+    let installEvt=null;
+    const installBtn=$('#installBtn');
+    const updateInstall=()=>{
+      if(!installBtn)return;
+      const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+      installBtn.hidden=standalone||!installEvt;
+    };
+    window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;updateInstall()});
+    window.addEventListener('appinstalled',()=>{installEvt=null;updateInstall();toast('Fretwork installed — open it from your home screen.',4200)});
+    if(installBtn)installBtn.onclick=async()=>{
+      if(!installEvt)return toast('Open the browser menu and choose Install app or Add to Home Screen.',5200);
+      try{installEvt.prompt();await installEvt.userChoice}catch(e){}
+      installEvt=null;updateInstall();
+    };
+    updateInstall();
+    const installablePath=/\/(?:index\.html)?$/.test(location.pathname);
+    if('serviceWorker' in navigator&&installablePath&&/^https?:$/.test(location.protocol)){
+      navigator.serviceWorker.register('sw.js').catch(()=>{});
+    }
     requestAnimationFrame(frame);
   },
   applyNames(){
@@ -4578,13 +5030,13 @@ const App={
     if(this.view==='chords'){try{Chords.render()}catch(e){}}
     if(this.view==='sheet'){try{Sheet.render()}catch(e){}}
     if(this.view==='learn'){try{Learn.render()}catch(e){}}
-    if(this.view==='song'&&Song.S&&!$('#sgMain').hidden){Song.lastViz='';Song.renderShapes();Song.renderEdit()}
+    if(this.view==='song'&&Song.S&&!$('#sgMain').hidden){Song.lastViz='';Song.renderShapes();Song.renderEdit();Song.renderAnalysis()}
   },
   setInst(k){
     this.inst=k;
     if(Chords.redraw)Chords.redraw();if(Song.instRedraw)Song.instRedraw();
     Chords.render();
-    if(Song.S&&!$('#sgMain').hidden){Song.lastViz='';Song.renderShapes();Song.updateNow(Math.max(0,Song.lastIdx));Song.renderEdit()}
+    if(Song.S&&!$('#sgMain').hidden){Song.lastViz='';Song.renderShapes();Song.updateNow(Math.max(0,Song.lastIdx));Song.renderEdit();Song.renderAnalysis()}
     if(this.view==='learn')Learn.render();
   },
   show(v){
