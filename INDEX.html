@@ -356,6 +356,24 @@ button.status{cursor:pointer;color:var(--tx)}
 .sheetstats{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:var(--mu)}
 .sheetstats .chip{flex-direction:row;align-items:center;gap:6px;padding:4px 10px;min-width:0}
 .pianotip{font-size:12px;color:var(--mu);margin-top:6px}
+/* melody analysis + piano roll */
+.melctl{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--s2)}
+.melctl label{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--mu);font-weight:600}
+.melctl input[type=number]{width:78px}
+.melctl input[type=range]{width:130px;accent-color:var(--brass)}
+.rollwrap{overflow:auto;margin-top:10px;background:var(--s1);border:1px solid var(--line);border-radius:14px;max-height:320px}
+.rollcanvas{position:relative;min-width:360px;user-select:none}
+.rollkey{position:absolute;left:0;width:42px;font-size:9px;color:var(--mu);text-align:right;padding-right:4px;line-height:14px;border-right:1px solid var(--line);background:var(--s1);z-index:3;pointer-events:none}
+.rollrow{position:absolute;left:42px;right:0;border-top:1px solid rgba(255,255,255,.045)}
+.rollgrid{position:absolute;width:1px;background:rgba(255,255,255,.07)}
+.rollgrid.beat{background:rgba(255,255,255,.16)}
+.rollgrid.bar{background:rgba(217,178,111,.48);width:2px}
+.rollbar{position:absolute;top:2px;font-size:9px;color:var(--mu);pointer-events:none;padding-left:3px;z-index:2}
+.rollnote{position:absolute;border-radius:4px;color:#1a1408;font-size:9px;font-weight:800;line-height:1;overflow:hidden;white-space:nowrap;padding:2px 4px;cursor:grab;touch-action:none;user-select:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.22);z-index:4}
+.rollnote.sel{outline:2px solid #fff;outline-offset:1px;z-index:6}
+.rollnote.dragging{opacity:.82;cursor:grabbing}
+.rollhandle{position:absolute;right:0;top:0;bottom:0;width:6px;background:rgba(0,0,0,.24);cursor:ew-resize;border-radius:0 4px 4px 0}
+@media(max-width:560px){.melctl label{flex:1 1 46%}.melctl input[type=range]{width:100%}.rollwrap{max-height:260px}}
 /* symbols */
 .symgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px;margin-top:12px}
 .symcard{background:var(--s2);border:1px solid var(--line);border-radius:15px;padding:10px 8px 9px;text-align:center;display:flex;flex-direction:column;gap:3px;align-items:center}
@@ -666,10 +684,11 @@ button.status{cursor:pointer;color:var(--tx)}
       <input type="search" id="vidUrl" placeholder="https://www.youtube.com/watch?v=… or https://vimeo.com/…" style="flex:1;min-width:220px" aria-label="Video link">
       <button class="btn primary" id="vidLoad">Load video</button>
       <button class="btn" id="vidCap">Record tab audio</button>
+      <button class="btn" id="vidMic">Record with mic</button>
       <label class="btn" for="vidFile">Use audio / video file</label><input type="file" id="vidFile" accept="audio/*,video/*" hidden>
     </div>
     <div class="err" id="vidErr" hidden></div>
-    <p class="fine" style="margin:8px 0 0">Tab capture works in Chrome and Edge on a computer: choose <b>This tab</b> (or the tab playing the video) and switch on <b>Share tab audio</b>. Phones cannot share tab audio — download the audio and use “Use audio / video file”.</p>
+    <p class="fine" style="margin:8px 0 0">Tab capture works in Chrome and Edge on a computer: choose <b>This tab</b> (or the tab playing the video) and switch on <b>Share tab audio</b>. Safari, phones and embedded preview panes usually cannot share tab audio — use <b>Record with mic</b> (play the video through the speakers) or load a downloaded file. A local video file is analysed by playing it through the app’s audio engine.</p>
     <div id="vidWrap" hidden>
       <div class="vidframe" id="vidFrame"></div>
       <div class="row" id="vidMeta" style="justify-content:space-between;margin-top:10px"></div>
@@ -681,6 +700,7 @@ button.status{cursor:pointer;color:var(--tx)}
         <button class="btn small" id="vidUndo">Undo</button>
         <span class="fine" id="vidCount">0 chords</span>
         <button class="btn small" id="vidToSheet">Open taps as chord sheet</button>
+        <button class="btn small primary" id="vidAnalyze">Analyse video audio</button>
       </div>
       <div id="vidTaps" class="chips" style="margin-top:8px"></div>
       <div class="vidtools" style="margin-top:12px">
@@ -3461,16 +3481,17 @@ async function itunes(q){
 const linkOut=(t,u)=>h('a',{class:'btn small',href:u,target:'_blank',rel:'noopener noreferrer',style:'text-decoration:none;color:inherit'},t);
 function webLinks(q){const e=encodeURIComponent(q);return h('div',{class:'links'},linkOut('Ultimate Guitar','https://www.ultimate-guitar.com/search.php?search_type=title&value='+e),linkOut('Chordify','https://chordify.net/search/'+e),linkOut('Songsterr tabs','https://www.songsterr.com/?pattern='+e),linkOut('E-Chords','https://www.e-chords.com/search-all/'+e),linkOut('Google','https://www.google.com/search?q='+e+'+chords'),linkOut('YouTube','https://www.youtube.com/results?search_query='+e+'+chords'))}
 const mmss=t=>{t=Math.max(0,Math.round(t));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')};
+const isVideoFile=f=>!!f&&(/^video\//i.test(f.type||'')||/\.(mp4|webm|mov|m4v|ogv|mkv)$/i.test(f.name||''));
 
 const Song={
   S:null,audio:null,shift:0,capo:0,level:'standard',sel:-1,loopA:-1,loopB:-1,rate:1,lastIdx:-2,scope:'run',playing:false,
-  virt:{start:0,t0:0},vtimer:null,vnext:0,cells:[],recording:false,rchunks:null,drag:false,lastViz:'',ed:null,
+  virt:{start:0,t0:0},vtimer:null,vnext:0,cells:[],recording:false,rchunks:null,drag:false,lastViz:'',ed:null,videoCapture:null,
   init(){
-    $('#sgFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)this.loadFile(f)};
+    $('#sgFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f){if(isVideoFile(f)){App.show('song');Video.useFile(f)}else this.loadFile(f)}};
     const src=$('#sgSrc');
     ['dragenter','dragover'].forEach(ev=>src.addEventListener(ev,e=>{e.preventDefault();$('#sgDrop').classList.add('over')}));
     ['dragleave','drop'].forEach(ev=>src.addEventListener(ev,e=>{e.preventDefault();$('#sgDrop').classList.remove('over')}));
-    src.addEventListener('drop',e=>{const f=e.dataTransfer&&e.dataTransfer.files[0];if(f)this.loadFile(f)});
+    src.addEventListener('drop',e=>{const f=e.dataTransfer&&e.dataTransfer.files[0];if(f){if(isVideoFile(f))Video.useFile(f);else this.loadFile(f)}});
     $('#sgRec').onclick=()=>this.toggleRecord();
     $('#sgBlank').onclick=()=>this.fromChords(['C','G','Am','F'],{title:'New sheet'});
     $('#sgUrlGo').onclick=()=>this.loadUrl();
@@ -3505,9 +3526,9 @@ const Song={
     this.err('');
     if(!/^https?:\/\//i.test(u))return this.err('Paste a full http:// or https:// link.');
     const vid=Video.parse(u);
-    if(vid&&(vid.kind==='youtube'||vid.kind==='vimeo')){
+    if(vid){
       $('#vidUrl').value=u;App.show('song');Video.load();
-      return toast('Video ready. Play it, then tap Record tab audio for the full song.',5200);
+      return;
     }
     this.prog('Downloading from the link…',4);
     try{
@@ -3524,15 +3545,84 @@ const Song={
   },
   async loadFile(file,meta){
     this.err('');this.reset();this.prog('Reading file…',3);
+    let decoded=false;
     try{
       const ab=await file.arrayBuffer();
       let ctx;try{await Engine.ensureCtx();ctx=Engine.ctx}catch(e){ctx=new (window.AudioContext||window.webkitAudioContext)()}
       this.prog('Decoding audio…',8);
       const buf=await decodeBuf(ctx,ab.slice(0));
+      decoded=true;
       const x=new Float32Array(buf.length);
       for(let c=0;c<buf.numberOfChannels;c++){const d=buf.getChannelData(c);for(let i=0;i<x.length;i++)x[i]+=d[i]/buf.numberOfChannels}
       await this.analyze(x,buf.sampleRate,{title:(meta&&meta.title)||file.name.replace(/\.[^.]+$/,''),artist:(meta&&meta.artist)||'',url:URL.createObjectURL(file)});
-    }catch(e){this.hideProg();this.err('Could not read that file ('+(e&&e.message||'unsupported format')+'). Try MP3, WAV, M4A or OGG.')}
+    }catch(e){
+      this.hideProg();
+      if(!decoded&&isVideoFile(file)&&!(meta&&meta.audioOnly)){
+        try{return await this.loadVideoFile(file,meta)}
+        catch(e2){this.err('Could not read the video’s audio ('+(e2&&e2.message||'unsupported video')+'). Open the Video panel, press Play, then choose “Analyse video audio”; or extract the audio track to MP3/WAV/M4A first.');return}
+      }
+      this.err('Could not read that file ('+(e&&e.message||'unsupported format')+'). Try MP3, WAV, M4A or OGG. For video, use “Use audio / video file” in the Video panel and press “Analyse video audio”.');
+    }
+  },
+  // Video containers (MP4/MOV/WebM) normally cannot be decoded by
+  // decodeAudioData. Play the element through Web Audio and record its audio
+  // track in real time; this works for downloaded/local files and direct URLs.
+  async loadVideoFile(file,meta){
+    const video=document.createElement('video');
+    video.src=URL.createObjectURL(file);video.preload='auto';video.playsInline=true;
+    video.style.cssText='position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;pointer-events:none';
+    document.body.append(video);
+    try{
+      await new Promise((res,rej)=>{video.onloadedmetadata=res;video.onerror=()=>rej(new Error('The browser cannot play this video container.'))});
+      await this.loadVideoElement(video,{title:(meta&&meta.title)||file.name.replace(/\.[^.]+$/,''),artist:(meta&&meta.artist)||'',url:(meta&&meta.url)||URL.createObjectURL(file)});
+    }finally{
+      try{video.pause();video.removeAttribute('src');video.load()}catch(e){}
+      video.remove();
+    }
+  },
+  stopVideoCapture(){
+    const v=this.videoCapture;
+    if(!v)return;
+    try{v.stop&&v.stop()}catch(e){}
+  },
+  async loadVideoElement(video,meta={}){
+    if(this.videoCapture)return;
+    if(!window.MediaRecorder)throw new Error('This browser cannot record audio from a video.');
+    await Engine.ensureCtx();
+    const c=Engine.ctx;
+    let src=video.__fwSrc;
+    if(!src){src=c.createMediaElementSource(video);video.__fwSrc=src}
+    const dest=c.createMediaStreamDestination();
+    const gain=c.createGain();gain.gain.value=0.85;
+    try{src.connect(dest);src.connect(gain);gain.connect(c.destination)}catch(e){}
+    const mime=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4','audio/aac'].find(t=>{try{return MediaRecorder.isTypeSupported(t)}catch(e){return false}})||'';
+    let mr;
+    try{mr=mime?new MediaRecorder(dest.stream,{mimeType:mime,audioBitsPerSecond:128000}):new MediaRecorder(dest.stream)}
+    catch(e){try{src.disconnect(dest);src.disconnect(gain);gain.disconnect()}catch(err){}throw new Error('Could not start the video audio recorder here.')}
+    const chunks=[];
+    mr.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+    let finished=false;
+    const done=new Promise(res=>{
+      mr.onstop=()=>{if(!finished){finished=true;res()}};
+      video.addEventListener('ended',()=>{if(mr.state!=='inactive'){try{mr.stop()}catch(e){}}},{once:true});
+    });
+    this.videoCapture={mr,stop:()=>{try{video.pause()}catch(e){};try{if(mr.state!=='inactive')mr.stop()}catch(e){}}};
+    this.prog('Starting video audio extraction…',3);
+    try{video.currentTime=0;await video.play()}
+    catch(e){try{src.disconnect(dest);src.disconnect(gain);gain.disconnect()}catch(err){};this.videoCapture=null;throw new Error('The browser blocked playback. Press Play on the video, then choose Analyse video audio again.')}
+    mr.start(500);
+    const dur=Number.isFinite(video.duration)&&video.duration>0?video.duration:0;
+    const timer=setInterval(()=>{
+      const t=Number.isFinite(video.currentTime)?video.currentTime:0;
+      this.prog('Extracting the video’s audio… '+(dur?Math.round(clamp(t/dur,0,1)*100):Math.round(t))+'%',dur?4+90*clamp(t/dur,0,1):30);
+    },500);
+    try{await done}finally{clearInterval(timer);try{src.disconnect(dest);src.disconnect(gain);gain.disconnect()}catch(e){};this.videoCapture=null}
+    if(!chunks.length)throw new Error('No audio was captured from the video.');
+    const type=(chunks[0]&&chunks[0].type)||mime||'audio/webm';
+    const ext=/mp4|aac/i.test(type)?'m4a':/ogg/i.test(type)?'ogg':'webm';
+    const blob=new Blob(chunks,{type});
+    this.hideProg();
+    await this.loadFile(new File([blob],'video-audio.'+ext,{type}),{title:(meta&&meta.title)||'Video audio',artist:(meta&&meta.artist)||'',url:(meta&&meta.url)||null,audioOnly:true});
   },
   async analyze(x,sr,meta){
     if(x.length<sr*4){this.hideProg();this.err('That audio is too short. Use at least 5 seconds.');return}
@@ -4235,95 +4325,289 @@ function staffSVG(notes,opt={}){
   if(opt.caption)g.append(sv('text',{x:width-18,y:height-8,'text-anchor':'end','font-size':11,fill:'#8d8776','font-family':'system-ui,sans-serif'},opt.caption));
   return g;
 }
+// A gentle one-pole high-pass removes room rumble and handling noise before
+// YIN sees it. It is deliberately cheap: the melody analyser can run on a
+// several-minute recording without blocking the page for too long.
+function melodyHighPass(x,sr,fc=55){
+  const dt=1/sr,rc=1/(2*Math.PI*fc),a=rc/(rc+dt);
+  const y=new Float32Array(x.length);let px=0,py=0;
+  for(let i=0;i<x.length;i++){const v=x[i];py=a*(py+v-px);px=v;y[i]=py}
+  return y;
+}
+
+// Turn raw pitch segments into a quantised, gap-aware note sequence. Keeping
+// this separate from pitch detection means the piano roll can re-quantise an
+// edited melody without throwing away the player's timing changes.
+function melodyQuantize(raw,opt={}){
+  const bpm=clamp(+opt.bpm||90,30,260),spb=60/bpm;
+  const grid=clamp(+opt.gridBeats||0.25,0.0625,2);
+  const strength=clamp(opt.quantStrength==null?0.85:+opt.quantStrength,0,1);
+  const src=(raw||[]).filter(r=>r&&Number.isFinite(r.start)&&Number.isFinite(r.end)&&Number.isFinite(r.midi)).sort((a,b)=>a.start-b.start);
+  if(!src.length)return [];
+  // Analysis removes leading silence automatically. When re-quantising an edited
+  // roll, keep the real timeline so its leading rests survive.
+  const base=Number.isFinite(opt.base)?+opt.base:src[0].start;
+  const qStart=sec=>{const b=Math.max(0,(sec-base)/spb),q=Math.round(b/grid)*grid;return b+(q-b)*strength};
+  const out=[];let cursor=0,prev=null;
+  for(const r of src){
+    const rawDur=Math.max(0.04,r.end-r.start);
+    let sb=qStart(r.start),dur=rawDur/spb;
+    const snap=Math.max(grid,Math.round(dur/grid)*grid);
+    dur=dur+(snap-dur)*strength;
+    if(sb<cursor)sb=cursor;
+    let gap=sb-cursor,hadRest=false;
+    if(gap>=grid*0.5&&(out.length||Number.isFinite(opt.base))){
+      const rb=Math.max(grid,Math.round(gap/grid)*grid);
+      out.push({rest:true,beats:+rb.toFixed(4),beatsExact:+rb.toFixed(4)});
+      cursor+=rb;gap=0;hadRest=true;
+    }
+    const midi=clamp(Math.round(r.midi),0,127);
+    if(prev&&!prev.rest&&!hadRest&&prev.midi===midi&&!r.onset&&gap<Math.max(0.10,grid*0.5)){
+      prev.beats=+(prev.beats+Math.max(grid*0.5,dur)).toFixed(4);
+      prev.beatsExact=+(prev.beatsExact+rawDur/spb).toFixed(4);
+      prev.end=+r.end.toFixed(3);prev.endBeat=+(prev.startBeat+prev.beats).toFixed(4);
+      prev.legato=true;prev.conf=+(((prev.conf||0)+(r.conf||0))/2).toFixed(3);
+      cursor=prev.endBeat;continue;
+    }
+    const b=Math.max(grid*0.5,dur);
+    const n={midi,beats:+b.toFixed(4),beatsExact:+(rawDur/spb).toFixed(4),startBeat:+cursor.toFixed(4),endBeat:+(cursor+b).toFixed(4),start:+r.start.toFixed(3),end:+r.end.toFixed(3),legato:!hadRest&&gap<0.04,conf:+(r.conf||0).toFixed(3)};
+    out.push(n);prev=n;cursor=n.endBeat;
+  }
+  return out;
+}
+
+// Flatten the piano-roll representation into the sequential event list used by
+// the staff, playback and MIDI export. Gaps become explicit rests.
+function melodyToSequence(notes,grid=0.25){
+  const src=(notes||[]).filter(n=>n&&!n.rest&&Number.isFinite(n.midi)).sort((a,b)=>(+a.startBeat||0)-(+b.startBeat||0));
+  const out=[];let cursor=0;
+  for(const n of src){
+    const sb=Math.max(cursor,+n.startBeat||cursor);
+    if(sb-cursor>=grid*0.5){
+      const rb=Math.max(grid,Math.round((sb-cursor)/grid)*grid);
+      out.push({rest:true,beats:+rb.toFixed(4),beatsExact:+rb.toFixed(4)});cursor+=rb;
+    }
+    const b=Math.max(grid*0.5,+n.beats||grid);
+    out.push(Object.assign({},n,{startBeat:+cursor.toFixed(4),endBeat:+(cursor+b).toFixed(4)}));
+    cursor+=b;
+  }
+  return out;
+}
+
+function melodyRawFromNotes(notes,bpm=90){
+  const spb=60/clamp(+bpm||90,30,260);
+  return (notes||[]).filter(n=>n&&!n.rest&&Number.isFinite(n.midi)).map(n=>({
+    midi:n.midi,start:(+n.startBeat||0)*spb,end:((+n.startBeat||0)+(+n.beats||0.25))*spb,conf:n.conf||0,onset:true
+  }));
+}
+
+// Lightweight DOM piano roll. Notes can be dragged vertically/horizontally, and
+// the right edge resizes them. The grid is in beats, so it stays musical at any
+// tempo. This deliberately uses plain DOM rather than canvas so touch and
+// keyboard controls remain accessible.
+function pianoRoll(notes,opt={}){
+  const all=Array.isArray(notes)?notes:[];
+  const grid=clamp(+opt.grid||0.25,0.0625,2);
+  const editable=!!opt.editable;
+  const px=clamp(+opt.pxPerBeat||58,32,120),rowH=clamp(+opt.rowH||15,12,22),topPad=18,keyW=44;
+  const pitched=all.filter(n=>n&&!n.rest&&Number.isFinite(n.midi));
+  let lo=opt.minMidi,hi=opt.maxMidi;
+  if(lo==null)lo=pitched.length?Math.min(...pitched.map(n=>n.midi))-3:48;
+  if(hi==null)hi=pitched.length?Math.max(...pitched.map(n=>n.midi))+3:72;
+  lo=clamp(Math.floor(lo),21,108);hi=clamp(Math.ceil(hi),lo+11,108);
+  let total=Math.max(8,+opt.minBeats||16);
+  for(const n of all)total=Math.max(total,(+n.startBeat||0)+(+n.beats||0)+1);
+  total=Math.ceil(total*2)/2;
+  const width=keyW+total*px,height=topPad+(hi-lo+1)*rowH;
+  const wrap=h('div',{class:'rollwrap'});
+  const canvas=h('div',{class:'rollcanvas',style:'width:'+width+'px;height:'+height+'px'});
+  for(let m=lo;m<=hi;m++){
+    const top=topPad+(hi-m)*rowH;
+    canvas.append(h('div',{class:'rollrow',style:'top:'+top+'px;height:'+rowH+'px'}));
+    if(m%12===0||m===lo||m===hi)canvas.append(h('div',{class:'rollkey',style:'top:'+top+'px;height:'+rowH+'px;line-height:'+rowH+'px'},noteName(m)));
+  }
+  const steps=Math.ceil(total/grid);
+  for(let i=0;i<=steps;i++){
+    const b=i*grid;if(b>total+1e-6)break;
+    const isBeat=Math.abs(b-Math.round(b))<1e-6,isBar=Math.abs(b%4)<1e-6;
+    canvas.append(h('div',{class:'rollgrid'+(isBar?' bar':isBeat?' beat':''),style:'left:'+(keyW+b*px)+'px;top:'+topPad+'px;bottom:0'}));
+    if(isBar&&b>0)canvas.append(h('div',{class:'rollbar',style:'left:'+(keyW+b*px+3)+'px'},String(Math.floor(b/4)+1)));
+  }
+  for(let i=0;i<all.length;i++){
+    const n=all[i];if(!n||n.rest||!Number.isFinite(n.midi))continue;
+    const b=Math.max(0,+n.startBeat||0),d=Math.max(grid*0.5,+n.beats||grid);
+    const x=keyW+b*px,y=topPad+(hi-n.midi)*rowH,w=Math.max(8,d*px-2),bh=Math.max(10,rowH-2);
+    const pc=((Math.round(n.midi)%12)+12)%12;
+    const block=h('div',{class:'rollnote'+(opt.selected===i?' sel':''),style:'left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+bh+'px;background:hsl('+(pc*30)+',62%,55%)',title:noteName(n.midi)+' · beat '+(b+1)+' · '+(+n.beats||0).toFixed(2)+' beats'},w>36?noteName(n.midi):'');
+    if(editable){
+      block.addEventListener('pointerdown',e=>{
+        if(e.button!==0)return;
+        e.preventDefault();e.stopPropagation();
+        try{block.setPointerCapture(e.pointerId)}catch(err){}
+        block.classList.add('dragging');
+        if(opt.onSelect)opt.onSelect(i);
+        canvas.querySelectorAll('.rollnote.sel').forEach(el=>el.classList.remove('sel'));
+        block.classList.add('sel');
+        const ox=e.clientX,oy=e.clientY,ob=b,om=n.midi;
+        const move=ev=>{
+          const db=Math.round(((ev.clientX-ox)/px)/grid)*grid;
+          const dm=Math.round((oy-ev.clientY)/rowH);
+          n.startBeat=Math.max(0,+(ob+db).toFixed(4));
+          n.midi=clamp(om+dm,lo,hi);n.endBeat=+(n.startBeat+(+n.beats||grid)).toFixed(4);
+          block.style.left=(keyW+n.startBeat*px)+'px';block.style.top=(topPad+(hi-n.midi)*rowH)+'px';
+          block.title=noteName(n.midi)+' · beat '+(n.startBeat+1)+' · '+(+n.beats||0).toFixed(2)+' beats';
+        };
+        const up=()=>{
+          block.classList.remove('dragging');
+          block.removeEventListener('pointermove',move);block.removeEventListener('pointerup',up);block.removeEventListener('pointercancel',up);
+          if(opt.onChange)opt.onChange(i);
+        };
+        block.addEventListener('pointermove',move);block.addEventListener('pointerup',up);block.addEventListener('pointercancel',up);
+      });
+      const handle=h('div',{class:'rollhandle'});
+      handle.addEventListener('pointerdown',e=>{
+        if(e.button!==0)return;
+        e.preventDefault();e.stopPropagation();
+        try{handle.setPointerCapture(e.pointerId)}catch(err){}
+        if(opt.onSelect)opt.onSelect(i);
+        canvas.querySelectorAll('.rollnote.sel').forEach(el=>el.classList.remove('sel'));
+        block.classList.add('sel');
+        const ox=e.clientX,ob=Math.max(grid*0.5,+n.beats||grid);
+        const move=ev=>{
+          const db=Math.round(((ev.clientX-ox)/px)/grid)*grid;
+          n.beats=Math.max(grid*0.5,+(ob+db).toFixed(4));n.endBeat=+(n.startBeat+n.beats).toFixed(4);
+          block.style.width=Math.max(8,n.beats*px-2)+'px';
+        };
+        const up=()=>{
+          handle.removeEventListener('pointermove',move);handle.removeEventListener('pointerup',up);handle.removeEventListener('pointercancel',up);
+          if(opt.onChange)opt.onChange(i);
+        };
+        handle.addEventListener('pointermove',move);handle.addEventListener('pointerup',up);handle.addEventListener('pointercancel',up);
+      });
+      block.append(handle);
+    }
+    canvas.append(block);
+  }
+  if(editable&&opt.onAdd){
+    canvas.addEventListener('pointerdown',e=>{
+      if(e.button!==0||e.target.closest('.rollnote'))return;
+      const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+      if(x<keyW||y<topPad)return;
+      e.preventDefault();
+      const beat=Math.max(0,Math.round(((x-keyW)/px)/grid)*grid);
+      const midi=clamp(hi-Math.floor((y-topPad)/rowH),lo,hi);
+      opt.onAdd({startBeat:beat,midi});
+    });
+  }
+  wrap.append(canvas);
+  return wrap;
+}
+
 function melodyFromAudio(x,sr,opt={}){
   const bpm=clamp(+opt.bpm||90,30,260),spb=60/bpm;
-  const target=8000,f=Math.max(1,Math.round(sr/target)),xs=downsample(x,f),sr2=sr/f;
-  const win=1024,hop=256,hopSec=hop/sr2;
-  const minMidi=clamp(+opt.minMidi||45,24,96),maxMidi=clamp(+opt.maxMidi||88,minMidi+6,108);
-  const frames=[];
-  for(let i=0;i+win<=xs.length;i+=hop){
-    const seg=xs.subarray(i,i+win);let e=0;
+  const grid=clamp(+opt.gridBeats||0.25,0.0625,2);
+  const strength=clamp(opt.quantStrength==null?0.85:+opt.quantStrength,0,1);
+  const sens=opt.sensitivity||opt.sens||'medium';
+  const gateScale=sens==='high'?0.65:sens==='low'?1.55:1;
+  const probThresh=sens==='high'?0.52:sens==='low'?0.68:0.60;
+  const target=8000,f=Math.max(1,Math.round(sr/target)),xs=f>1?downsample(x,f):x,sr2=sr/f;
+  if(!xs||xs.length<512)return [];
+  const minMidi=clamp(+opt.minMidi||40,24,96),maxMidi=clamp(+opt.maxMidi||91,minMidi+6,108);
+  // 768 samples at 8 kHz is ~96 ms: long enough for a low male voice, short
+  // enough to follow real note changes. A 128-sample hop gives ~16 ms timing.
+  const win=768,hop=128,hopSec=hop/sr2,winSec=win/sr2;
+  const hp=melodyHighPass(xs,sr2,50);
+  const frames=[];let prevRms=0;
+  for(let i=0;i+win<=hp.length;i+=hop){
+    const seg=hp.subarray(i,i+win);let e=0;
     for(let k=0;k<seg.length;k++)e+=seg[k]*seg[k];
     const rms=Math.sqrt(e/seg.length);
     let midi=null,prob=0;
-    if(rms>=0.0022){
-      // YIN is a little slower than an FFT, but it is much better at tracking a
-      // single moving line and it reports a real confidence value for rests.
-      const r=yin(seg,sr2,midiToFreq(minMidi-1),midiToFreq(maxMidi+1),0.12);
-      if(r&&r.prob>0.58&&r.freq>0){
+    if(rms>=0.0015){
+      const r=yin(seg,sr2,midiToFreq(minMidi-1),midiToFreq(maxMidi+1),0.10);
+      if(r&&r.prob>0.45&&r.freq>0){
         const m=freqToMidi(r.freq);
         if(m>=minMidi-1&&m<=maxMidi+1){midi=clamp(m,minMidi,maxMidi);prob=r.prob}
       }
     }
-    frames.push({rms,midi,prob,t:i*hopSec});
+    frames.push({rms,midi,prob,onset:Math.max(0,Math.log((rms+1e-6)/(prevRms+1e-6))),t:i/sr2});
+    prevRms=rms;
   }
   if(!frames.length)return [];
-  // A percentile noise gate adapts to phone microphones and quiet recordings.
+  // A short re-articulation can be masked by the analysis window: the RMS may
+  // never fall to silence, and the frame-to-frame onset is small. Comparing
+  // against the quietest recent frame catches the energy dip and rise.
+  for(let i=0;i<frames.length;i++){
+    let mn=frames[i].rms;
+    for(let j=Math.max(0,i-4);j<i;j++)mn=Math.min(mn,frames[j].rms);
+    frames[i].rise=Math.max(0,Math.log((frames[i].rms+1e-6)/(mn+1e-6)));
+  }
   const rs=frames.map(fr=>fr.rms).sort((a,b)=>a-b);
   const floorR=rs[Math.min(rs.length-1,Math.floor(rs.length*0.22))]||0;
-  const gate=Math.max(0.0021,Math.min(0.018,floorR*2.4));
-  let track=frames.map(fr=>(fr.midi!=null&&fr.rms>=gate&&fr.prob>=0.58)?fr.midi:null);
-  // Remove isolated frames, then apply a tiny median filter. This keeps real
-  // articulations while rejecting one-frame octave jumps and bow noise.
-  track=track.map((m,i)=>{
-    if(m==null)return null;
-    const a=[];for(let j=Math.max(0,i-2);j<=Math.min(track.length-1,i+2);j++)if(track[j]!=null)a.push(track[j]);
-    if(!a.length)return null;
-    const med=median(a);
-    return Math.abs(m-med)<=2.1?med:null;
-  });
-  // Keep real octave leaps. YIN already reports the fundamental, and the median
-  // passes above remove one-frame octave glitches. Folding every 12-semitone move
-  // here would erase genuine register changes in the melody.
-  for(let i=0;i<track.length;i++)if(track[i]!=null)track[i]=Math.round(track[i]);
-  // A second, shorter median pass removes tiny pitch wobble without smearing a slide.
+  const gate=Math.max(0.0016,Math.min(0.020,floorR*2.2))*gateScale;
+  let track=frames.map(fr=>(fr.midi!=null&&fr.rms>=gate&&fr.prob>=probThresh)?fr.midi:null);
+  // Remove single-frame dropouts, then a 3-frame median removes octave noise
+  // without smearing fast passages (the old 5-frame filter was too aggressive).
+  for(let i=0;i<track.length;i++)if(track[i]!=null&&(i===0||track[i-1]==null)&&(i===track.length-1||track[i+1]==null))track[i]=null;
   track=track.map((m,i)=>{
     if(m==null)return null;
     const a=[];for(let j=Math.max(0,i-1);j<=Math.min(track.length-1,i+1);j++)if(track[j]!=null)a.push(track[j]);
     return a.length?Math.round(median(a)):null;
   });
-  const minFrames=Math.max(2,Math.round(0.065/hopSec));
-  const gapFrames=Math.max(2,Math.round(0.085/hopSec));
+  const minFrames=Math.max(2,Math.round(0.055/hopSec)),gapFrames=Math.max(2,Math.round(0.070/hopSec));
   const segs=[];let seg=null,quiet=0;
   for(let i=0;i<track.length;i++){
     const m=track[i];
-    if(m==null){
-      if(seg){quiet++;if(quiet>=gapFrames){segs.push(seg);seg=null;quiet=0}}
-      continue;
-    }
+    if(m==null){if(seg){quiet++;if(quiet>=gapFrames){segs.push(seg);seg=null;quiet=0}}continue}
     quiet=0;
-    if(!seg){seg={start:i,end:i+1,vals:[m]};continue}
-    const c=median(seg.vals);
-    if(Math.abs(m-c)<=0.8){seg.vals.push(m);seg.end=i+1;continue}
-    // Only accept a pitch change that lasts at least two more frames. Otherwise
-    // it is an attack transient or a stray harmonic.
-    const ok=(track[i+1]!=null&&Math.abs(track[i+1]-m)<0.9)&&(track[i+2]!=null&&Math.abs(track[i+2]-m)<0.9);
-    if(ok){seg.end=i;segs.push(seg);seg={start:i,end:i+1,vals:[m]}}
-    else seg.end=i+1;
+    if(!seg){seg={start:i,end:i+1,vals:[m],probs:[frames[i].prob],cand:0,candStart:i};continue}
+    const c=median(seg.vals),diff=Math.abs(m-c);
+    const stable=(track[i+1]!=null&&Math.abs(track[i+1]-m)<=0.9)||(track[i+2]!=null&&Math.abs(track[i+2]-m)<=0.9);
+    const attack=frames[i].onset>0.60||frames[i].rise>0.60;
+    // A sudden leap or an onset is a reliable boundary. A repeated note at the
+    // same pitch has no pitch difference, so an energy dip-and-rise also starts
+    // a new note. A slow drift (vibrato, slides, tuning) needs to persist for
+    // ~100 ms before we split.
+    const reAttack=i-seg.start>=3&&frames[i].rise>0.60;
+    if((attack&&diff>0.35&&stable)||(reAttack&&stable)||(diff>2.4&&stable)){
+      seg.end=i;segs.push(seg);seg={start:i,end:i+1,vals:[m],probs:[frames[i].prob],cand:0,candStart:i};
+    }else{
+      if(diff>0.85){if(!seg.cand)seg.candStart=i;seg.cand++}
+      else{seg.cand=0;seg.candStart=i}
+      seg.vals.push(m);seg.end=i+1;seg.probs.push(frames[i].prob);
+      if(seg.cand>=6){
+        const startNew=seg.candStart,keep=startNew-seg.start;
+        if(keep>=2){
+          seg.end=startNew;seg.vals=seg.vals.slice(0,keep);seg.probs=seg.probs.slice(0,keep);segs.push(seg);
+          seg={start:startNew,end:i+1,vals:track.slice(startNew,i+1),probs:frames.slice(startNew,i+1).map(fr=>fr.prob),cand:0,candStart:startNew};
+        }else{seg.cand=0;seg.candStart=i}
+      }
+    }
   }
   if(seg)segs.push(seg);
-  const qBeat=sec=>Math.max(0.25,Math.round(sec/spb*4)/4);
-  const out=[];let prev=null;
+  const raw=[];const center=winSec*0.30;
   for(const s of segs){
-    const dur=(s.end-s.start)*hopSec;
-    if(dur<0.055||s.end-s.start<minFrames)continue;
+    const durFrames=s.end-s.start,durSec=durFrames*hopSec;
+    if(durFrames<minFrames||durSec<0.050)continue;
     const midi=Math.round(median(s.vals));
-    const gapFrames=prev?(s.start-prev.endFrame):0;
-    const gapSec=gapFrames*hopSec;
-    if(prev&&prev.midi===midi&&gapFrames<Math.max(1,Math.round(0.10/hopSec))){
-      prev.beats+=qBeat(dur);prev.beatsExact+=dur/spb;prev.end=s.end;prev.endFrame=s.end;prev.durSec+=dur;prev.legato=true;continue;
-    }
-    if(prev&&gapSec>=0.16){
-      const rb=Math.max(0.25,Math.round(gapSec/spb*4)/4);
-      out.push({rest:true,beats:rb,beatsExact:gapSec/spb});
-    }
-    const n={midi,beats:qBeat(dur),beatsExact:+(dur/spb).toFixed(4),legato:prev?gapSec<0.075:false,durSec:+dur.toFixed(3),start:+((s.start*hopSec)).toFixed(3),end:+((s.end*hopSec)).toFixed(3),endFrame:s.end};
-    out.push(n);prev=n;
-    if(out.length>=1200)break;
+    const conf=s.probs.reduce((a,b)=>a+b,0)/Math.max(1,s.probs.length);
+    if(conf<probThresh*0.88)continue;
+    const start=+(s.start*hopSec+center).toFixed(3),end=+(s.end*hopSec+center).toFixed(3);
+    if(end-start<0.045)continue;
+    const onset=!!(frames[s.start]&&(frames[s.start].onset>0.55||frames[s.start].rise>0.55));
+    raw.push({midi,start,end,conf:+conf.toFixed(3),onset});
+    if(raw.length>=1200)break;
   }
-  return out;
+  // Suppress very short, low-confidence octave glitches. Genuine octave leaps
+  // usually last longer than 110 ms or have a strong YIN confidence.
+  for(let i=1;i<raw.length;i++){
+    const p=raw[i-1],r=raw[i];
+    if(Math.abs(r.midi-p.midi)===12&&(r.end-r.start)<0.11&&r.conf<0.82)r.midi=p.midi;
+  }
+  melodyFromAudio.lastRaw=raw;melodyFromAudio.lastBpm=bpm;melodyFromAudio.lastGrid=grid;melodyFromAudio.lastSensitivity=sens;
+  return melodyQuantize(raw,{bpm,gridBeats:grid,quantStrength:strength});
 }
-function writeMidiFile(notes,bpm=90,ts=4){
+function writeMidiFile(notes,bpm=90,ts=4,opt={}){
   const PPQ=480;
   const vlq=n=>{const b=[n&0x7f];n>>=7;while(n>0){b.unshift((n&0x7f)|0x80);n>>=7}return b};
   const events=[];
@@ -4334,8 +4618,9 @@ function writeMidiFile(notes,bpm=90,ts=4){
   events.push({tick:0,order:0,data:[0xC0,0x00]});
   let tick=0;
   for(const n of notes){
-    // Use the unquantised duration for MIDI timing; notation keeps the neat value.
-    const span=Math.max(1,Math.round((n.beatsExact||n.beats||1)*PPQ));
+    // Quantised timing is the default now; the raw duration is still available
+    // for anyone who explicitly asks for an exact-timing export.
+    const span=Math.max(1,Math.round(((opt&&opt.exact?n.beatsExact:n.beats)||n.beatsExact||n.beats||1)*PPQ));
     if(n.rest){tick+=span;continue}
     const dur=Math.max(30,Math.round(span*(n.legato?0.998:0.90)));
     events.push({tick,order:1,data:[0x90,clamp(n.midi,0,127),96]});
@@ -4429,6 +4714,7 @@ const SH_KEYS=[
 // ================= videos, strumming sheets, learn-to-play
 const Video={
   meta:null,taps:[],recording:false,stream:null,mr:null,chunks:[],capTimer:null,capStart:0,body:'strum',
+  micRecording:false,micChunks:[],micTimer:null,micStart:0,file:null,
   patterns:[
     {n:'Downbeats only (4/4)',ts:4,s:'D---D---'},
     {n:'Pop · D DU UDU',ts:4,s:'D-DU-UDU'},
@@ -4452,6 +4738,8 @@ const Video={
     $('#vidUndo').onclick=()=>this.undo();
     $('#vidToSheet').onclick=()=>this.toSheet();
     $('#vidCap').onclick=()=>this.recording?this.stopCapture():this.capture();
+    $('#vidMic').onclick=()=>this.micToggle();
+    $('#vidAnalyze').onclick=()=>this.analyzeCurrent();
     $('#vidStrum').onclick=()=>{this.body='strum';this.render()};
     $('#vidLearnBtn').onclick=()=>{this.body='learn';this.render()};
     $('#vidPlayPat').onclick=()=>this.playPattern();
@@ -4469,12 +4757,12 @@ const Video={
     if(m)return {kind:'youtube',id:m[1]};
     m=/(?:vimeo\.com\/(?:video\/)?)(\d+)/i.exec(u);
     if(m)return {kind:'vimeo',id:m[1]};
-    if(/^https?:\/\//i.test(u)&&/\.(mp4|webm|ogv|ogg|mov|m4v)(?:[?#]|$)/i.test(u))return {kind:'file',url:u};
+    if(/^https?:\/\//i.test(u)&&/\.(mp4|webm|ogv|mov|m4v|mkv)(?:[?#]|$)/i.test(u))return {kind:'file',url:u};
     return null;
   },
   async load(){
     const u=$('#vidUrl').value.trim(),p=this.parse(u);
-    if(!p){this.err('That does not look like a YouTube or Vimeo link. Paste a full link, for example https://www.youtube.com/watch?v=…');return}
+    if(!p){this.err('Paste a YouTube/Vimeo link, or a direct video-file URL ending in .mp4, .webm, .mov or .mkv. For an audio link, use the Song panel’s URL field.');return}
     this.err('');
     this.meta={kind:p.kind,id:p.id,url:u,title:p.kind==='youtube'?'YouTube video':p.kind==='vimeo'?'Vimeo video':'Video'};
     this.taps=[];this.paintTaps();this.renderFrame();this.showBox(true);this.render();
@@ -4484,14 +4772,14 @@ const Video={
       if(oe){const r=await fetch(oe);if(r.ok){const j=await r.json();if(j&&j.title){this.meta.title=j.title;this.renderMeta();this.render()}}}
     }catch(e){}
     const w=$('#vidWrap');if(w)w.scrollIntoView({behavior:'smooth',block:'start'});
-    toast('Video loaded. Play it, then tap each chord as it changes.',3600);
+    toast(p.kind==='file'?'Video loaded. Press “Analyse video audio” to transcribe its chords, key and tempo.':p.kind==='youtube'?'Video loaded. Use “Record tab audio” (Chrome/Edge) or “Record with mic” to analyse it.':'Video loaded. Use “Record tab audio” or “Record with mic” to analyse it.',5600);
   },
   renderFrame(){
     const f=$('#vidFrame'),m=this.meta;if(!f)return;f.replaceChildren();
     if(!m)return;
     if(m.kind==='youtube')f.append(h('iframe',{src:'https://www.youtube.com/embed/'+m.id+'?rel=0',title:m.title,allow:'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share',allowfullscreen:true,referrerpolicy:'strict-origin-when-cross-origin'}));
     else if(m.kind==='vimeo')f.append(h('iframe',{src:'https://player.vimeo.com/video/'+m.id,title:m.title,allow:'autoplay; fullscreen; picture-in-picture',allowfullscreen:true,referrerpolicy:'strict-origin-when-cross-origin'}));
-    else if(/\.(mp4|webm|ogv|mov|m4v)(?:[?#]|$)/i.test(m.url))f.append(h('video',{src:m.url,controls:true,preload:'metadata'}));
+    else if(m.isVideo||/\.(mp4|webm|ogv|mov|m4v|mkv)(?:[?#]|$)/i.test(m.url))f.append(h('video',{src:m.url,controls:true,preload:'metadata'}));
     else f.append(h('div',{class:'fine',style:'padding:16px'},'This file plays through the audio tools below.'));
     this.renderMeta();
   },
@@ -4527,14 +4815,64 @@ const Video={
     const main=$('#sgMain');if(main&&!main.hidden)setTimeout(()=>main.scrollIntoView({behavior:'smooth',block:'start'}),120);
   },
   useFile(file){
-    this.err('');this.taps=[];
-    const isVideo=/^video\//.test(file.type)||/\.(mp4|webm|mov|m4v|ogv)$/i.test(file.name);
-    this.meta={kind:'file',url:URL.createObjectURL(file),title:file.name.replace(/\.[^.]+$/,'')};
+    this.err('');this.taps=[];this.file=file;
+    const isVideo=isVideoFile(file);
+    this.meta={kind:'file',url:URL.createObjectURL(file),title:file.name.replace(/\.[^.]+$/,''),fileName:file.name,isVideo};
     this.showBox(true);this.renderFrame();this.paintTaps();this.render();
-    Song.loadFile(file,{title:this.meta.title});
+    if(isVideo){
+      toast('Video ready. Press “Analyse video audio” — it plays through the app so the chords, key and tempo can be detected.',6200);
+      const w=$('#vidWrap');if(w)w.scrollIntoView({behavior:'smooth',block:'start'});
+    }else{
+      Song.loadFile(file,{title:this.meta.title});
+    }
+  },
+  async micToggle(){
+    if(this.micRecording){
+      this.micRecording=false;clearInterval(this.micTimer);
+      const b=$('#vidMic');if(b)b.textContent='Record with mic';
+      try{await Rec.end()}catch(e){}
+      const ch=this.micChunks||[];this.micChunks=[];
+      if(!ch.length)return this.err('Nothing was captured. Raise the speaker volume, move the microphone closer, and try again.');
+      let min=Infinity;for(const c of ch)min=Math.min(min,c.t);
+      let n=0;for(const c of ch)n=Math.max(n,Math.round((c.t-min)*Engine.ctx.sampleRate)+c.d.length);
+      if(n<1)return this.err('Nothing was captured. Check the microphone permission and try again.');
+      const sr=Engine.ctx.sampleRate,x=new Float32Array(n);
+      for(const c of ch){const o=Math.round((c.t-min)*sr);for(let i=0;i<c.d.length;i++)x[o+i]+=c.d[i]}
+      this.err('');toast('Analysing the recorded speakers…',2400);
+      try{await Song.analyze(x,sr,{title:(this.meta&&this.meta.title)||'Recorded video audio',artist:'',url:null})}
+      catch(e){this.err('Could not analyse that recording: '+(e&&e.message||e))}
+      return;
+    }
+    if(this.recording)return this.err('Stop the tab capture first.');
+    this.err('');
+    if(!Engine.stream&&!await enableMic())return;
+    this.micChunks=[];
+    try{await Rec.begin(this.micChunks)}catch(e){return this.err('Could not start the microphone recorder.')}
+    this.micRecording=true;this.micStart=Date.now();
+    const b=$('#vidMic');if(b)b.textContent='■ Stop mic (0:00)';
+    this.micTimer=setInterval(()=>{
+      const s=(Date.now()-this.micStart)/1000;
+      const btn=$('#vidMic');if(btn)btn.textContent='■ Stop mic ('+mmss(s)+')';
+      if(s>=300)this.micToggle();
+    },500);
+    toast('Recording with the microphone. Play the video through the speakers and keep the room quiet. Tap stop when the section finishes.',6200);
+  },
+  async analyzeCurrent(){
+    const m=this.meta;
+    if(!m)return this.err('Load a video first.');
+    if(m.kind==='youtube'||m.kind==='vimeo')return this.err('YouTube and Vimeo players do not expose their audio to a web page. Use “Record tab audio” in Chrome or Edge, or “Record with mic” while the video plays through the speakers. You can also download a file you have the right to use.');
+    if(Song.videoCapture){Song.stopVideoCapture();return}
+    const v=$('#vidFrame video');
+    if(!v)return this.err('This link is not a playable video file. Use “Use audio / video file” and choose the downloaded video.');
+    this.err('');
+    const btn=$('#vidAnalyze');if(btn)btn.textContent='■ Stop & analyse';
+    try{await Song.loadVideoElement(v,{title:m.title||'Video audio',url:m.url})}
+    catch(e){this.err('Could not read the video audio: '+(e&&e.message||e))}
+    finally{if(btn)btn.textContent='Analyse video audio'}
   },
   async capture(){
     this.err('');
+    if(this.micRecording)return this.err('Stop the microphone recording first.');
     if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){
       return this.err('This browser cannot capture tab audio. Use “Use audio / video file” instead, or open the app in Chrome or Edge.');
     }
@@ -4548,12 +4886,12 @@ const Video={
         else throw e;
       }
     }catch(e){
-      return this.err('Screen/tab sharing was cancelled or blocked. Open this app in its own browser tab, click “Record tab audio”, choose the tab that is playing the video, and switch on “Share tab audio”. On iPhone/iPad, use “Use audio / video file” instead — iOS does not share tab audio.');
+      return this.err('Screen/tab sharing was cancelled or blocked. Open this app in its own browser tab, click “Record tab audio”, choose the tab that is playing the video, and switch on “Share tab audio”. If your browser cannot share tab audio, use “Record with mic” or “Use audio / video file”.');
     }
     const at=stream.getAudioTracks();
     if(!at.length){
       stream.getTracks().forEach(t=>{try{t.stop()}catch(e){}});
-      return this.err('No audio was shared. Repeat “Record tab audio” and tick “Share tab audio” / “Share system audio” (Chrome or Edge). Muted tabs and DRM-protected players can also block capture.');
+      return this.err('No audio was shared. Repeat “Record tab audio” and tick “Share tab audio” / “Share system audio” (Chrome or Edge). Muted tabs and DRM-protected players can also block capture. If that is not available, use “Record with mic”.');
     }
     this.stream=stream;this.chunks=[];
     const mime=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'].find(t=>{try{return window.MediaRecorder&&MediaRecorder.isTypeSupported(t)}catch(e){return false}})||'';
@@ -4717,7 +5055,7 @@ const Video={
 
 const Sheet={
   sub:'sheet',notes:[],dur:1,tempo:90,ts:4,title:'My melody',playIdx:-1,playing:false,
-  mel:{recording:false,chunks:[],notes:[],timer:null,analysing:false},
+  mel:{recording:false,chunks:[],notes:[],raw:[],audio:null,timer:null,analysing:false,grid:'1/16',strength:0.85,sens:'medium',sel:-1,edited:false},
   quiz:{kind:'note',q:null,answered:false,score:0,total:0,streak:0,best:0},
   init(){
     $$('#shNav button').forEach(b=>b.addEventListener('click',()=>{this.sub=b.dataset.s;$$('#shNav button').forEach(x=>x.setAttribute('aria-pressed',x===b));this.render()}));
@@ -4747,6 +5085,7 @@ const Sheet={
       h('button',{class:'btn small',onclick:()=>this.loadDemo()},'Load demo')));
     bar.append(h('div',{class:'staffbox',id:'shStaffBox'},staffSVG(this.notes,{ts:this.ts,cursor:this.playIdx,label:'Melody on the staff'})));
     bar.append(h('p',{class:'fine'},this.notes.length?this.notes.length+' notes · '+this.notes.reduce((a,n)=>a+(n.beats||0),0).toFixed(2)+' beats · octave '+(this.notes.length?Math.floor(Math.min(...this.notes.filter(n=>!n.rest).map(n=>n.midi))/12)-1:4):'Tap a note below to start writing.'));
+    if(this.notes.length)bar.append(h('details',{style:'margin-top:10px'},h('summary',{},'Piano roll view'),pianoRoll(this.sheetTimeline(),{editable:false,grid:0.25,minBeats:16})));
     body.append(bar);
     // entry panel
     const add=h('div',{class:'panel'});
@@ -4772,6 +5111,10 @@ const Sheet={
     const box=$('#shStaffBox');if(!box)return;
     box.replaceChildren(staffSVG(this.notes,{ts:this.ts,cursor:this.playIdx,label:'Melody on the staff'}));
   },
+  sheetTimeline(){
+    let c=0;
+    return this.notes.map(n=>{const b=Math.max(0.0625,+n.beats||1),o=Object.assign({},n,{startBeat:c,beats:b,endBeat:c+b});c+=b;return o});
+  },
   addRest(){this.notes.push({rest:true,beats:this.dur});this.render()},
   loadDemo(){
     const demo=['C4','D4','E4','F4','G4','A4','B4','C5'];
@@ -4790,26 +5133,90 @@ const Sheet={
   stopSheet(){this.playToken=(this.playToken||0)+1;this.playing=false;this.playIdx=-1;Engine.stopVoices();this.render()},
   exportMidi(){if(!this.notes.length)return toast('Add some notes first');const bytes=writeMidiFile(this.notes,this.tempo,this.ts);saveBlob(new Blob([bytes],{type:'audio/midi'}),this.title.replace(/[^\w]+/g,'-').toLowerCase()+'.mid');toast('MIDI file exported')},
   exportSheetJSON(){saveBlob(new Blob([JSON.stringify({title:this.title,tempo:this.tempo,ts:this.ts,notes:this.notes},null,2)],{type:'application/json'}),this.title.replace(/[^\w]+/g,'-').toLowerCase()+'.json')},
+  gridBeats(){return {'1/4':1,'1/8':0.5,'1/16':0.25,'1/32':0.125,'1/8T':1/3,'1/16T':1/6}[this.mel.grid]||0.25},
+  melodySeq(notes=this.mel.notes){return melodyToSequence(notes,this.gridBeats())},
+  async analyzeMelody(x,sr){
+    const m=this.mel;m.audio={x,sr};m.analysing=true;this.render();
+    await new Promise(r=>setTimeout(r,30));
+    try{
+      m.notes=melodyFromAudio(x,sr,{bpm:this.tempo,minMidi:36,maxMidi:96,gridBeats:this.gridBeats(),quantStrength:m.strength,sensitivity:m.sens});
+      m.raw=(melodyFromAudio.lastRaw||[]).slice();m.sel=-1;m.edited=false;
+      const n=m.notes.filter(x=>!x.rest).length;
+      toast(n?'Found '+n+' notes · '+m.notes.length+' events':'No clear melody was found. Try a steadier single line, or set Sensitivity to High.',4200);
+    }catch(e){console.warn('[Fretwork] melody analysis failed',e);m.notes=[];m.raw=[];toast('Could not analyse that recording')}
+    m.analysing=false;this.render();
+  },
+  requantizeMelody(){
+    const m=this.mel;if(!m.notes.length&&!m.raw.length)return;
+    const fromRoll=!m.raw.length||m.edited;
+    const raw=fromRoll?melodyRawFromNotes(m.notes,this.tempo):m.raw;
+    m.notes=melodyQuantize(raw,{bpm:this.tempo,gridBeats:this.gridBeats(),quantStrength:m.strength,base:fromRoll?0:undefined});
+    m.sel=-1;this.render();
+  },
+  detectMelodyTempo(){
+    const a=this.mel.audio;if(!a)return toast('Record or load some audio first');
+    try{const b=estimateTempo(a.x,a.sr);if(b){this.tempo=clamp(Math.round(b),40,220);this.requantizeMelody();toast('Tempo found: '+this.tempo+' BPM',2600)}else toast('Could not hear a steady pulse')}
+    catch(e){toast('Could not detect a tempo')}
+  },
   melodyPanel(){
     const p=h('div',{class:'panel'});
     p.append(h('h2',{},'Hum, sing or play a melody → MIDI'));
-    p.append(h('p',{class:'hint'},'Record up to a minute with the microphone (or load an audio file). Fretwork tracks the pitch, turns it into notes, writes it on the staff and exports a Standard MIDI file you can open in any DAW.'));
+    p.append(h('p',{class:'hint'},'Record a clear single line (or load an audio file). Fretwork tracks the pitch and timing, quantises it to a musical grid, and draws an editable piano roll. Drag notes to move them, drag the right edge to change length, or tap an empty grid cell to add a note.'));
     const st=this.mel;
-    const recBtn=h('button',{class:'btn '+(st.recording?'primary':''),onclick:()=>this.toggleMelody()},st.recording?'■ Stop recording':'● Record melody');
+    const recBtn=h('button',{class:'btn '+(st.recording?'primary':''),onclick:()=>this.toggleMelody()},st.analysing?'Analysing…':st.recording?'■ Stop recording':'● Record melody');
     st.btn=recBtn;
     p.append(h('div',{class:'row'},recBtn,
       h('label',{class:'btn small',for:'melFile'},'Use audio file'),h('input',{type:'file',id:'melFile',accept:'audio/*',hidden:true})));
     const fi=$('#melFile');if(fi)fi.onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)this.loadMelodyFile(f)};
-    p.append(h('p',{class:'fine'},st.recording?'Recording… sing or hum a clear single line. Tap stop when you are done.':st.analysing?'Analysing the pitch…':'Tip: sing "da" or hum steadily. Slides and chords are harder to track.'));
+    const gridSel=h('select',{'aria-label':'Quantise grid',onchange:e=>{st.grid=e.target.value;this.requantizeMelody()}},
+      ...['1/4','1/8','1/16','1/32','1/8T','1/16T'].map(k=>h('option',{value:k,selected:st.grid===k},k)));
+    const sensSel=h('select',{'aria-label':'Analysis sensitivity',onchange:e=>{st.sens=e.target.value;if(st.audio)this.analyzeMelody(st.audio.x,st.audio.sr);else this.render()}},
+      h('option',{value:'low',selected:st.sens==='low'},'Low (clean)'),h('option',{value:'medium',selected:st.sens==='medium'},'Medium'),h('option',{value:'high',selected:st.sens==='high'},'High (quiet)'));
+    const strength=h('input',{type:'range',min:0,max:100,value:Math.round(st.strength*100),'aria-label':'Quantise strength',onchange:e=>{st.strength=+e.target.value/100;this.requantizeMelody()}});
+    p.append(h('div',{class:'melctl'},
+      h('label',{},'Tempo',h('input',{type:'number',min:40,max:260,value:this.tempo,onchange:e=>{this.tempo=clamp(Math.round(+e.target.value||90),40,260);if(st.notes.length)this.requantizeMelody();else this.render()}})),
+      h('label',{},'Quantise grid',gridSel),
+      h('label',{},'Strength',strength),
+      h('label',{},'Sensitivity',sensSel),
+      h('div',{class:'row',style:'align-items:flex-end'},h('button',{class:'btn small',onclick:()=>this.detectMelodyTempo()},'Detect tempo'))));
+    p.append(h('p',{class:'fine'},st.recording?'Recording… sing or hum a clear single line. Tap stop when you are done.':st.analysing?'Analysing pitch, onsets and timing…':'Tip: a steady “da” or hum works best. Set the tempo and grid before recording if you know the song.'));
     if(st.notes.length){
-      const chips=h('div',{class:'chips',style:'margin-top:10px'});
-      st.notes.forEach(n=>chips.append(h('div',{class:'chip'},h('b',{},noteName(n.midi)),h('span',{},(noteAltName(n.midi)?noteAltName(n.midi)+' · ':'')+n.beats+'♩'),h('button',{class:'btn small',style:'padding:0 7px;border-radius:7px',onclick:()=>Engine.playMidis([n.midi],{dur:0.5})},'▶'))));
-      p.append(chips);
+      const pitched=st.notes.filter(n=>!n.rest),sel=st.notes[st.sel];
+      p.append(h('div',{class:'row',style:'margin-top:10px'},h('b',{},pitched.length+' notes'),h('span',{class:'fine'},st.notes.length+' events · '+this.tempo+' BPM · grid '+st.grid)));
+      if(sel&&!sel.rest){
+        const mutate=fn=>{fn(sel);st.edited=true;st.sel=st.notes.indexOf(sel);this.render()};
+        p.append(h('div',{class:'row',style:'margin-top:8px'},
+          h('span',{class:'fine'},'Selected '+noteName(sel.midi)),
+          h('button',{class:'btn small',onclick:()=>mutate(x=>{x.midi=clamp(x.midi-1,0,127);Engine.playMidis([x.midi],{dur:0.22})})},'− semitone'),
+          h('button',{class:'btn small',onclick:()=>mutate(x=>{x.midi=clamp(x.midi+1,0,127);Engine.playMidis([x.midi],{dur:0.22})})},'+ semitone'),
+          h('button',{class:'btn small',onclick:()=>mutate(x=>{x.startBeat=Math.max(0,+(x.startBeat-this.gridBeats()).toFixed(4));x.endBeat=+(x.startBeat+x.beats).toFixed(4)})},'← earlier'),
+          h('button',{class:'btn small',onclick:()=>mutate(x=>{x.startBeat=+(x.startBeat+this.gridBeats()).toFixed(4);x.endBeat=+(x.startBeat+x.beats).toFixed(4)})},'later →'),
+          h('button',{class:'btn small',onclick:()=>mutate(x=>{x.beats=Math.max(this.gridBeats()*0.5,+(x.beats-this.gridBeats()).toFixed(4));x.endBeat=+(x.startBeat+x.beats).toFixed(4)})},'shorter'),
+          h('button',{class:'btn small',onclick:()=>mutate(x=>{x.beats=+(x.beats+this.gridBeats()).toFixed(4);x.endBeat=+(x.startBeat+x.beats).toFixed(4)})},'longer'),
+          h('button',{class:'btn small',onclick:()=>Engine.playMidis([sel.midi],{dur:0.45})},'▶ hear'),
+          h('button',{class:'btn small',onclick:()=>{st.notes.splice(st.sel,1);st.sel=-1;st.edited=true;this.render()}},'delete')));
+      }
+      p.append(pianoRoll(st.notes,{editable:true,selected:st.sel,grid:this.gridBeats(),pxPerBeat:64,
+        onSelect:i=>{st.sel=i},
+        onChange:i=>{st.edited=true;st.sel=i;this.render()},
+        onAdd:({startBeat,midi})=>{
+          const b=Math.max(this.gridBeats()*0.5,+startBeat||0);
+          const beats=Math.max(this.gridBeats(),this.dur||1),spb=60/this.tempo;
+          st.notes.push({midi,beats,beatsExact:beats,startBeat:b,endBeat:+(b+beats).toFixed(4),start:+(b*spb).toFixed(3),end:+((b+beats)*spb).toFixed(3),conf:1});
+          st.edited=true;st.sel=st.notes.length-1;Engine.playMidis([midi],{dur:0.3});this.render();
+        }}));
       p.append(h('div',{class:'row',style:'margin-top:10px'},
-        h('button',{class:'btn small primary',onclick:()=>{this.notes=st.notes.map(n=>({midi:n.midi,beats:n.beats}));this.title='Recorded melody';this.render();toast('Melody added to the sheet')}},'Use these notes in the sheet'),
-        h('button',{class:'btn small',onclick:()=>{const b=writeMidiFile(st.notes,this.tempo,this.ts);saveBlob(new Blob([b],{type:'audio/midi'}),'recorded-melody.mid')}},'Export MIDI'),
-        h('button',{class:'btn small',onclick:()=>{this.seq=Engine.playSeq(st.notes.map(n=>({midi:n.midi,beats:n.beats})),{bpm:this.tempo})}},'▶ Preview'),
-        h('button',{class:'btn small',onclick:()=>{st.notes=[];this.render()}},'Clear')));
+        h('button',{class:'btn small primary',onclick:()=>{
+          const seq=this.melodySeq();
+          this.notes=seq.map(n=>n.rest?{rest:true,beats:n.beats,beatsExact:n.beatsExact}:{midi:n.midi,beats:n.beats,beatsExact:n.beatsExact,legato:!!n.legato});
+          this.title='Recorded melody';this.render();toast('Melody added to the notes sheet');
+        }},'Use these notes in the sheet'),
+        h('button',{class:'btn small',onclick:()=>{const b=writeMidiFile(this.melodySeq(),this.tempo,this.ts);saveBlob(new Blob([b],{type:'audio/midi'}),'recorded-melody.mid')}},'Export MIDI'),
+        h('button',{class:'btn small',onclick:()=>{this.seq=Engine.playSeq(this.melodySeq().map(n=>n.rest?{rest:true,beats:n.beats}:{midi:n.midi,beats:n.beats}),{bpm:this.tempo})}},'▶ Preview'),
+        st.audio?h('button',{class:'btn small',onclick:()=>this.analyzeMelody(st.audio.x,st.audio.sr)},'Re-analyse'):null,
+        h('button',{class:'btn small',onclick:()=>{st.notes=[];st.raw=[];st.sel=-1;st.edited=false;this.render()}},'Clear notes')));
+    }else if(st.audio&&!st.analysing){
+      p.append(h('div',{class:'row',style:'margin-top:10px'},h('button',{class:'btn small primary',onclick:()=>this.analyzeMelody(st.audio.x,st.audio.sr)},'Re-analyse recording'),h('span',{class:'fine'},'Audio is stored in this tab only.')));
     }
     return p;
   },
@@ -4817,23 +5224,20 @@ const Sheet={
     const m=this.mel;
     if(m.recording){
       m.recording=false;clearInterval(m.timer);
-      await Rec.end();
-      const ch=m.chunks||[];
-      if(!ch.length)return toast('Nothing was captured — check the microphone.');
+      try{await Rec.end()}catch(e){}
+      const ch=m.chunks||[];m.chunks=[];
+      if(!ch.length){m.analysing=false;this.render();return toast('Nothing was captured — check the microphone.')}
       let min=Infinity;for(const c of ch)min=Math.min(min,c.t);
       let n=0;for(const c of ch)n=Math.max(n,Math.round((c.t-min)*Engine.ctx.sampleRate)+c.d.length);
+      if(n<1){m.analysing=false;this.render();return toast('Nothing was captured — check the microphone.')}
       const sr=Engine.ctx.sampleRate,x=new Float32Array(n);
       for(const c of ch){const o=Math.round((c.t-min)*sr);for(let i=0;i<c.d.length;i++)x[o+i]+=c.d[i]}
-      m.analysing=true;this.render();
-      await new Promise(r=>setTimeout(r,30));
-      try{m.notes=melodyFromAudio(x,sr,{bpm:this.tempo,minMidi:40,maxMidi:84});toast(m.notes.length?'Found '+m.notes.length+' notes':'No clear melody was found. Try again, a little louder and steadier.',4000)}
-      catch(e){console.warn(e);toast('Could not analyse that recording')}
-      m.analysing=false;this.render();return;
+      await this.analyzeMelody(x,sr);return;
     }
     if(Loop.pads.some(p=>p.state))return toast('Finish the looper recording first');
     if(Song.recording)return toast('Finish the song recording first');
     if(!Engine.stream&&!await enableMic())return;
-    m.chunks=[];m.notes=[];
+    m.chunks=[];m.notes=[];m.raw=[];m.sel=-1;m.audio=null;m.edited=false;m.analysing=false;
     try{await Rec.begin(m.chunks)}catch(e){return toast('Could not start the recorder')}
     m.recording=true;const t0=performance.now();
     m.timer=setInterval(()=>{if(m.btn)m.btn.textContent='■ Stop ('+mmss((performance.now()-t0)/1000)+')'},400);
@@ -4846,11 +5250,8 @@ const Sheet={
       const buf=await decodeBuf(Engine.ctx,ab);
       const x=new Float32Array(buf.length);
       for(let c=0;c<buf.numberOfChannels;c++){const d=buf.getChannelData(c);for(let i=0;i<x.length;i++)x[i]+=d[i]/buf.numberOfChannels}
-      this.mel.analysing=true;this.render();
-      await new Promise(r=>setTimeout(r,30));
-      this.mel.notes=melodyFromAudio(x,buf.sampleRate,{bpm:this.tempo,minMidi:40,maxMidi:84});
-      this.mel.analysing=false;this.render();
-      toast('Found '+this.mel.notes.length+' notes',2600);
+      this.mel.notes=[];this.mel.raw=[];this.mel.sel=-1;this.mel.edited=false;
+      await this.analyzeMelody(x,buf.sampleRate);
     }catch(e){this.mel.analysing=false;this.render();toast('Could not read that audio file')}
   },
   // ---------- symbols
